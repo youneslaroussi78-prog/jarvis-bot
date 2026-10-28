@@ -789,7 +789,7 @@ button.sys-row:hover{background:var(--glass-2)}
     <div class="glass">
       <div class="brand">
         <svg class="mark" viewBox="0 0 34 34" aria-hidden="true"><defs><linearGradient id="bm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2FD39A"/><stop offset=".55" stop-color="#3E7BFA"/><stop offset="1" stop-color="#7C6BFF"/></linearGradient></defs><rect width="34" height="34" rx="11" fill="url(#bm)"/><path d="M8 22.5 13.5 16l4 3.6L26 10.5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="10.5" r="2.4" fill="#fff"/></svg>
-        <div><b>Jarvis</b><span>Trading · Devin</span></div>
+        <div><b>Jarvis</b><span>Trading · Younes</span></div>
       </div>
       <nav class="nav" id="sideNav"></nav>
       <div class="sys" id="sysBox">
@@ -802,7 +802,7 @@ button.sys-row:hover{background:var(--glass-2)}
 
   <main class="main">
     <div class="top">
-      <div class="titles"><small id="hello">Hej Devin</small><h1 id="vTitle">Hem</h1><p class="vsub" id="vSub"></p></div>
+      <div class="titles"><small id="hello">Hej Younes</small><h1 id="vTitle">Hem</h1><p class="vsub" id="vSub"></p></div>
       <button class="chip health" type="button" id="healthChip" hidden><i class="dot"></i><span id="healthT">Hälsa</span></button>
       <button class="chip fresh" type="button" id="fresh" aria-label="Uppdatera priser"><i class="dot live"></i><span class="lbl">Priser</span> <span id="freshT">hämtas…</span><svg class="sync" id="syncBtn" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 10A7.8 7.8 0 0 0 5.6 6.3L4 8"/><path d="M4 3.5V8h4.5"/><path d="M4.5 14a7.8 7.8 0 0 0 13.9 3.7L20 16"/><path d="M20 20.5V16h-4.5"/></svg></button>
       <button class="iconbtn" type="button" id="lookBtn" aria-label="Byt till ljust läge"></button>
@@ -1205,7 +1205,7 @@ function renderAll(){renderInbox();renderHealth();renderHeader();renderOverview(
 
 function renderHeader(){
   const d=new Date(),hr=d.getHours();
-  $("hello").textContent=(hr<10?"God morgon":hr<18?"God eftermiddag":"God kväll")+", Devin · "+d.toLocaleDateString("sv-SE",{weekday:"long",day:"numeric",month:"long"});
+  $("hello").textContent=(hr<10?"God morgon":hr<18?"God eftermiddag":"God kväll")+", Younes · "+d.toLocaleDateString("sv-SE",{weekday:"long",day:"numeric",month:"long"});
   const at=S.meta.prices?.at,chip=$("fresh");
   if(!at){$("freshT").textContent=S.dbOk===false?"ej tillgängliga":"hämtas…"}
   else{const age=(Date.now()-new Date(at))/36e5;$("freshT").textContent=timeStr(at).replace(/^idag /,"");chip.classList.toggle("stale",age>8);chip.title=(age>8?"Priserna är äldre än 8 timmar.":"Källa: "+(S.meta.prices.source||"TradingView"))+" Tryck för att uppdatera."}
