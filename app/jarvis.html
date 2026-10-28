@@ -2058,7 +2058,8 @@ function tdRow(p){const txt=typeof p==="string"?p:p?.result;if(typeof txt!=="str
   const [hd,row]=txt.trim().split("\n");if(!row)return null;const H=hd.split(";"),V=row.split(";"),o={};H.forEach((k,i)=>o[k]=V[i]);
   return{p:num(o.close),c:num(o.percent_change),h:num(o.high),l:num(o.low),t:num(o.last_quote_at)||num(o.timestamp),date:o.datetime}}
 async function fetchCrypto(){
-  const r=await MCP.callTool(SRV.cr,"get_tickers",{},{cache:false}),m={};
+  // claude.ai:s katalog listar Crypto.coms verktyg som Get_tickers (versal); prova båda stavningarna
+  let r;try{r=await MCP.callTool(SRV.cr,"get_tickers",{},{cache:false})}catch(e){if(!["not_in_manifest","tool_error","upstream_error"].includes(e?.code))throw e;r=await MCP.callTool(SRV.cr,"Get_tickers",{},{cache:false})}const m={};
   // Crypto.com bytte 26 okt format från BTC_USD till BTCUSD; terminer (BTCUSD261030) och PERP hoppas över
   for(const x of payloadOf(r)?.data||[]){const n=String(x.instrument_name||""),mm=/^([A-Z0-9]+)_(USDT|USD)$/.exec(n)||/^([A-Z0-9]+?)(USDT|USD)$/.exec(n);if(!mm)continue;const b=mm[1],q=mm[2];if(m[b]&&q==="USDT")continue;
     m[b]={p:num(x.last),c:num(x.change)*100,h:num(x.high),l:num(x.low),t:Math.round(Date.parse(x.timestamp)/1000)}}
