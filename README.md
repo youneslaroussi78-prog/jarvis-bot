@@ -60,3 +60,13 @@ Inte med i den här kopian: databasen, journalen, positioner, scanningsarkivet, 
 ## Licens
 
 Ingen licens är vald. Koden får läsas, men inte kopieras eller användas vidare utan lov från ägaren.
+
+## Younes kopia (sedan 2026-10-28)
+
+Den här forken är Younes egen Jarvis, byggd av Claude i Claude-appen på Younes Windows-dator.
+
+- Sidan: https://claude.ai/artifact/PVnPWS7n5PEnq4S8mExFHU (privat artifact med egen databas), publicerad från `app/jarvis.html`.
+- Testportföljen startade tom 2026-10-28 med 100 000 låtsaskronor.
+- Schemalagda körningar i Claude-appen (Schemalagt): `jarvis-morgonscan` 07.45 vardagar, `jarvis-testtrade-vakt` varje hel timme 09–21 vardagar, `jarvis-kvallsscan` 22.20 vardagar, `jarvis-krypto-helg-auto` 10 och 20 lör–sön och `jarvis-uppdatera-nu` (manuell). De går bara när appen är öppen.
+- Egna regler utöver Devins: `references/handelsplan.md` avsnitt 9 (dagsmål +2 %, lägen åt båda håll i aktier, ädelmetaller och krypto).
+- Mappen `data/` (ledger, scanningar, databasexport) är lokal och ligger aldrig i git.

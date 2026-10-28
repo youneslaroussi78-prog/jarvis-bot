@@ -33,6 +33,9 @@ $RULES = [ordered]@{
   learnTrades = 30
   # under lärfasen högst 10 % total öppen risk i stället för 5 % (Devin 27 okt: "Höj taket på total risk till 10 % under lärfasen")
   maxOpenRiskPctLearn = 10
+  # dagsmål (Younes 2026-10-28: "jag vill göra 2 % i avkastning per dag ... trada upp till 2 %, sen är du klar"): när dagens stängda trades
+  # gett så här många procent av portföljvärdet vid dagens början läggs inga nya testtrades den dagen; öppna positioner följer sin plan
+  dailyTargetPct = 2
   text = @(
     'Ingen trade utan nedskriven handelsplan: tes, HTF och regim, nivå med minst två verktyg, BOS-villkor, invalidering, två motargument, händelser, korrelation, exitplan och alla nio grindar (references\handelsplan.md).',
     'Swing: bara A-betyg, minst 1:2, ingen rapport inom 14 dagar, stopp högst 8 % bort. Köp vid BOS; ordern förfaller efter 7 dagar eller om kursen går under stoppet först.',
@@ -43,7 +46,8 @@ $RULES = [ordered]@{
     'Ingen paus före Feds räntebesked eller amerikansk KPI (Devin 27 okt: fortsätt handla och lär dig). Trades som läggs inom 24 timmar före ett besked märks och räknas för sig i statistiken. Efter en förlust inga nya trades samma dag, paus ett dygn efter två förluster i rad och stopp vid −6R på en vecka.',
     'Turbo och mini simuleras med knockout: under stoppet med marginal och under S2, högst 5 gångers hävstång för swing och 10 för daytrade. Gap förbi knockout ger förlust över 1R.',
     'Kostnader: 0,1 % per affär för aktier, 0,15 % för krypto, plus 0,4 % spread på produktens värde och cirka 7 % finansiering per år för turbo och mini. Resultat i kronor med dollarkursen vid köpet.',
-    'Blankning (short) med samma regler spegelvänt: BOS nedåt, stopp ovanför, mål vid stöd under. Bara i nedtrend, aldrig in i översålt (RSI under 30), högst 3 blankningar samtidigt, halv risk i risk-on. Lånekostnad cirka 2 % per år för aktier och 10 % för krypto; Mini S och Turbo S har knockout ovanför stoppet.')
+    'Blankning (short) med samma regler spegelvänt: BOS nedåt, stopp ovanför, mål vid stöd under. Bara i nedtrend, aldrig in i översålt (RSI under 30), högst 3 blankningar samtidigt, halv risk i risk-on. Lånekostnad cirka 2 % per år för aktier och 10 % för krypto; Mini S och Turbo S har knockout ovanför stoppet.',
+    'Dagsmål (Younes 28 okt 2026): +2 % av portföljvärdet per handelsdag, räknat på stängda trades sedan midnatt mot värdet vid dagens början. När målet är nått läggs inga nya testtrades den dagen; öppna positioner följer sin plan. Lägen tas både för köp och blankning i aktier, index, ädelmetaller och krypto, alltid enligt reglerna ovan.')
 }
 function N($v) { if ($null -eq $v -or $v -is [string]) { return [double]::NaN }; [double]$v }
 function Ok([double]$v) { -not ([double]::IsNaN($v) -or [double]::IsInfinity($v)) }
@@ -232,6 +236,10 @@ if ($Open) {
   # Ingen hämndtrading: förlust i dag, två förluster i rad senaste dygnet eller −6R på veckan stoppar nya trades
   $closedTr = @($L.trades | Where-Object { $_.status -eq 'stängd' } | Sort-Object { [double]$_.closed })
   $today0 = [DateTimeOffset]::new($now.Date).ToUnixTimeSeconds()
+  # Dagsmål (Younes 2026-10-28, handelsplan.md avsnitt 9): dagens stängda trades mot portföljvärdet vid dagens början (sista värdekurvepunkten före midnatt)
+  $dayBase = [double]$L.start; foreach ($p in @($L.equity)) { if ([double]$p[0] -lt $today0 -and [double]$p[1] -gt 0) { $dayBase = [double]$p[1] } }
+  $dayKr = (($closedTr | Where-Object { [double]$_.closed -ge $today0 } | Measure-Object resultKr -Sum).Sum)
+  if ($null -ne $dayKr -and $dayBase -gt 0 -and $dayKr / $dayBase * 100 -ge $RULES.dailyTargetPct) { "Dagsmålet +$($RULES.dailyTargetPct) % är nått ($(F $dayKr 0) kr i dag): inga nya testtrades förrän i morgon."; return }
   # lärfas: pausreglerna och taken för antalet gäller först när learnTrades trades är avslutade
   $learning = $closedTr.Count -lt $RULES.learnTrades
   if ($learning) { "Lärfas: $($closedTr.Count) av $($RULES.learnTrades) trades avslutade. Ingen paus efter förluster och inget tak för antalet." }

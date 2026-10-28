@@ -79,3 +79,12 @@ Samma plan, grindar och risk som för köp, spegelvänt:
 
 - Ärlig lärdom med `paper.ps1 -Lesson` (vad som fungerade, vad som inte gjorde det, vad som ska ändras).
 - Statistik per strategi, betyg, marknad, horisont och produkt. Inga slutsatser före 20–30 avslutade trades per grupp; först då ändras reglerna, och bara med Devin.
+
+## 9. Dagsmål och lägen åt båda håll (Younes 2026-10-28)
+
+Younes kopia av Jarvis sedan 2026-10-28: här ändras reglerna när Younes säger till, med datum. Younes 2026-10-28: "Jag vill göra 2 % i avkastning per dag. Du ska trada upp till 2 % sen är du klar. Du ska inte bara gå på något som ska upp, vi ska även jobba med att shorta och trada värdepapper, ädelmetaller och krypto."
+
+- **Dagsmål +2 %:** målet är +2 % av portföljvärdet per handelsdag. Dagens resultat räknas på stängda trades sedan midnatt mot portföljvärdet vid dagens början (sista punkten i värdekurvan före midnatt, annars startvärdet). När det är +2 % eller mer läggs inga fler testtrades den dagen; motorn (`paper.ps1`, `dailyTargetPct`) stoppar nya order. Öppna positioner följer sin plan (stopp, mål, break-even, dagsslut).
+- **Åt båda håll, i alla tre tillgångsslagen:** Jarvis letar aktivt lägen både för köp och blankning (avsnitt 7) i aktier och index, ädelmetaller (guld, silver, koppar) och krypto, och tar de lägen som klarar planen och de nio grindarna tills dagsmålet är nått.
+- **Målet ändrar inte reglerna:** 1 % risk per trade, minst 1:2, BOS, de nio grindarna, sektortaken och lärfasen i avsnitt 3 gäller som förut. Ett svagt läge tas aldrig för att nå målet.
+- **Att veta:** backtesten (strategier.md) visar ännu ingen fördel per trade, och +2 % per dag motsvarar cirka 2 R netto per dag med 1 % risk. De flesta dagar nås inte målet. Det är ett mål att mäta mot, inte en förväntan; statistiken visar hur ofta det nås.
