@@ -3,7 +3,7 @@
 # Skriver "OK"/"FEL" per test och "Tester: x av y godkända". Avslutar med kod 1 om något test fallerar.
 $ErrorActionPreference = 'Stop'
 $paper = Join-Path $PSScriptRoot 'paper.ps1'
-$root = Join-Path $env:TEMP "jarvis-test-$([guid]::NewGuid().ToString('N').Substring(0, 8))"
+$PSEXE = (Get-Process -Id $PID).Path; $root = Join-Path ([IO.Path]::GetTempPath()) "jarvis-test-$([guid]::NewGuid().ToString('N').Substring(0, 8))"
 $enc = [Text.UTF8Encoding]::new($false)
 $T0 = 1792800000   # en hel timme i oktober 2026
 $script:pass = 0; $script:fail = 0
@@ -23,7 +23,7 @@ function Run($name, $trade, $bars, [int]$times = 1, [scriptblock]$check) {
   W (Join-Path $d "$($trade.ysym).json") @{ bars = $B; last = $bars[-1][3] }
   W (Join-Path $d 'ledger.json') @{ v = 1; created = 'test'; start = 100000; currency = 'SEK'; trades = @($trade); equity = @(); lessons = @(); events = @() }
   $nowT = $T0 + 3600 * ($B.Count + 1)
-  for ($k = 0; $k -lt $times; $k++) { $null = & powershell -NoProfile -ExecutionPolicy Bypass -File $paper -Update -DataDir $d -BarsDir $d -NowT $nowT }
+  for ($k = 0; $k -lt $times; $k++) { $null = & $PSEXE -NoProfile -ExecutionPolicy Bypass -File $paper -Update -DataDir $d -BarsDir $d -NowT $nowT }
   $t = (Get-Content (Join-Path $d 'ledger.json') -Raw -Encoding UTF8 | ConvertFrom-Json).trades[0]
   try { $msg = & $check $t; if ($msg) { throw $msg }; "OK  $name"; $script:pass++ } catch { "FEL $($name): $($_.Exception.Message) (status $($t.status), skäl $($t.reasonClosed), r $($t.r), utgångar $(@($t.exits).Count))"; $script:fail++ }
 }
@@ -78,7 +78,7 @@ function OpenTest($name, $cand, $plan, $regime, $events, [scriptblock]$check, $t
   W (Join-Path $d 'makrokalender.json') @{ events = @($events) }
   W (Join-Path $d 'ledger.json') @{ v = 1; created = 'test'; start = 100000; currency = 'SEK'; trades = @($trades); equity = @(); lessons = @(); events = @() }
   foreach ($x in @($trades | Where-Object { $_.status -in 'väntar', 'öppen' })) { W (Join-Path $d "$($x.ysym).json") @{ bars = @(); last = 99 } }
-  $out = (& powershell -NoProfile -ExecutionPolicy Bypass -File $paper -Open us-tst -Plan (Join-Path $d 'plan.json') -DataDir $d -BarsDir $d -NowT ($T0 + 7200) -ScanFile (Join-Path $d 'scan.json')) -join "`n"
+  $out = (& $PSEXE -NoProfile -ExecutionPolicy Bypass -File $paper -Open us-tst -Plan (Join-Path $d 'plan.json') -DataDir $d -BarsDir $d -NowT ($T0 + 7200) -ScanFile (Join-Path $d 'scan.json')) -join "`n"
   $L = Get-Content (Join-Path $d 'ledger.json') -Raw -Encoding UTF8 | ConvertFrom-Json
   try { $msg = & $check $out $L; if ($msg) { throw $msg }; "OK  $name"; $script:pass++ } catch { "FEL $($name): $($_.Exception.Message) | utskrift: $($out -replace "`n", ' / ')"; $script:fail++ }
 }
@@ -122,7 +122,7 @@ function Run15($name, $trade, $bars, [scriptblock]$check) {
   $i = 0; $B = @($bars | ForEach-Object { , @(($T15 + 900 * $i++), $_[0], $_[1], $_[2], $_[3]) })
   W (Join-Path $d "$($trade.ysym).json") @{ bars = $B; last = $bars[-1][3] }
   W (Join-Path $d 'ledger.json') @{ v = 1; created = 'test'; start = 100000; currency = 'SEK'; trades = @($trade); equity = @(); lessons = @(); events = @() }
-  $null = & powershell -NoProfile -ExecutionPolicy Bypass -File $paper -Update -DataDir $d -BarsDir $d -NowT ($T15 + 900 * ($B.Count + 1))
+  $null = & $PSEXE -NoProfile -ExecutionPolicy Bypass -File $paper -Update -DataDir $d -BarsDir $d -NowT ($T15 + 900 * ($B.Count + 1))
   $t = (Get-Content (Join-Path $d 'ledger.json') -Raw -Encoding UTF8 | ConvertFrom-Json).trades[0]
   try { $msg = & $check $t; if ($msg) { throw $msg }; "OK  $name"; $script:pass++ } catch { "FEL $($name): $($_.Exception.Message) (status $($t.status), skäl $($t.reasonClosed), stängd $($t.closed))"; $script:fail++ }
 }
@@ -139,7 +139,7 @@ function OpenMany($name, [scriptblock]$check, $extra = @(), $regime = 'Neutral')
     gates = @{ htf = $true; events = $true; confluence = $true; discount = $true; bos = $true; stop = $true; rr = $true; invalidation = $true; risk = $true } }
   W (Join-Path $d 'plan.json') @(, $p); W (Join-Path $d 'scan.json') @{ regime = $regime; candidates = @(); soon = @() }; W (Join-Path $d 'DT.json') @{ bars = @(); last = 99.5 }; W (Join-Path $d 'makrokalender.json') @{ events = @() }
   foreach ($x in $sw) { W (Join-Path $d "$($x.ysym).json") @{ bars = @(); last = 99 } }
-  $out = (& powershell -NoProfile -ExecutionPolicy Bypass -File $paper -Open dt-test -Plan (Join-Path $d 'plan.json') -DataDir $d -BarsDir $d -NowT ($T0 + 7200) -ScanFile (Join-Path $d 'scan.json')) -join "`n"
+  $out = (& $PSEXE -NoProfile -ExecutionPolicy Bypass -File $paper -Open dt-test -Plan (Join-Path $d 'plan.json') -DataDir $d -BarsDir $d -NowT ($T0 + 7200) -ScanFile (Join-Path $d 'scan.json')) -join "`n"
   $L = Get-Content (Join-Path $d 'ledger.json') -Raw -Encoding UTF8 | ConvertFrom-Json
   try { $msg = & $check $out $L; if ($msg) { throw $msg }; "OK  $name"; $script:pass++ } catch { "FEL $($name): $($_.Exception.Message) | $($out -replace "`n", ' / ')"; $script:fail++ }
 }
@@ -152,7 +152,7 @@ OpenMany 'open-daytrade-utan-tak' { param($o, $L) $dt = @($L.trades | Where-Obje
 $d = Join-Path $root 'db-state-kurva'; New-Item -ItemType Directory -Force $d | Out-Null
 W (Join-Path $d 'TST.json') @{ bars = @(, @($T0, 99, 99.5, 98, 99)); last = 99 }
 W (Join-Path $d 'ledger.json') @{ v = 1; created = 'test'; start = 100000; currency = 'SEK'; trades = @(Trade @{}); equity = @(@(($T0 - 7200), 100000), @(($T0 - 3600), 100100)); lessons = @(); events = @() }
-$null = & powershell -NoProfile -ExecutionPolicy Bypass -File $paper -Update -DataDir $d -BarsDir $d -NowT ($T0 + 7200)
+$null = & $PSEXE -NoProfile -ExecutionPolicy Bypass -File $paper -Update -DataDir $d -BarsDir $d -NowT ($T0 + 7200)
 try { $raw = [IO.File]::ReadAllText((Join-Path $d 'db-state.json')); $eq = @(($raw | ConvertFrom-Json).equity)
   if ($raw -match '"Count"') { throw 'equity innehåller {value, Count}' } elseif ($eq.Count -lt 2 -or @($eq[0]).Count -ne 2) { throw "equity ska vara listor [tid, värde], har $($eq.Count) punkter" }
   "OK  db-state-kurva"; $script:pass++ } catch { "FEL db-state-kurva: $($_.Exception.Message)"; $script:fail++ }
@@ -162,7 +162,7 @@ $d = Join-Path $root 'stats-fore-besked'; New-Item -ItemType Directory -Force $d
 $cl = @{ status = 'stängd'; closed = $T0 - 86400 * 2; daysHeld = 2; strategy = 'pullback'; grade = 'A' }
 $tr = @((Trade ($cl + @{ id = 'pt-a'; r = 1.5; resultKr = 1500; nearEvent = 'Fed test' })), (Trade ($cl + @{ id = 'pt-b'; r = -1; resultKr = -1000 })), (Trade ($cl + @{ id = 'pt-c'; r = 2; resultKr = 2000; nearEvent = $null })))
 W (Join-Path $d 'ledger.json') @{ v = 1; created = 'test'; start = 100000; currency = 'SEK'; trades = $tr; equity = @(); lessons = @(); events = @() }
-$null = & powershell -NoProfile -ExecutionPolicy Bypass -File $paper -Update -DataDir $d -BarsDir $d -NowT ($T0 + 7200)
+$null = & $PSEXE -NoProfile -ExecutionPolicy Bypass -File $paper -Update -DataDir $d -BarsDir $d -NowT ($T0 + 7200)
 try { $be = ([IO.File]::ReadAllText((Join-Path $d 'db-state.json')) | ConvertFrom-Json).stats.byEvent
   if ($be.fore.n -ne 1 -or $be.fore.avgR -ne 1.5) { throw "före besked ska vara 1 trade med 1,5 R, är n=$($be.fore.n) R=$($be.fore.avgR)" } elseif ($be.utan.n -ne 2) { throw "övriga ska vara 2, är $($be.utan.n)" }
   "OK  stats-fore-besked"; $script:pass++ } catch { "FEL stats-fore-besked: $($_.Exception.Message)"; $script:fail++ }

@@ -2,9 +2,9 @@
 # och djupanalysen i data\nivaer.json (FVG, order block, POC/VAL/VAH). Devin 26 okt: "rita och visa i min tradingview".
 # Nivåerna läses från databasexporten (data\db-export\assets), så exportera efter en ny analys.
 # Körs: powershell -ExecutionPolicy Bypass -File pine.ps1   ->  data\jarvis-nivaer.pine (klistras in i Pine Editor och sparas som "Jarvis nivåer")
-param([string]$DbDir = (Join-Path $PSScriptRoot '..\data\db-export'))
+param([string]$DbDir = (Join-Path $PSScriptRoot '../data/db-export'))
 $ErrorActionPreference = 'Stop'
-$data = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\data'))
+$data = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../data'))
 $inv = [Globalization.CultureInfo]::InvariantCulture; $sv = [Globalization.CultureInfo]::GetCultureInfo('sv-SE')
 $NIV = Get-Content (Join-Path $data 'nivaer.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 # syminfo.ticker i TradingView-listan (USDT-par räknas som USD i skriptet)
@@ -16,7 +16,7 @@ function S($v, $d) { ([double]$v).ToString("N$d", $sv) }
 function Q($s) { '"' + (([string]$s) -replace '\\', '\\' -replace '"', "'") + '"' }
 $lv = @(); $zn = @(); $bs = @(); $nf = @()
 foreach ($id in $TICK.Keys) {
-  $f = Join-Path $DbDir "assets\$id.json"; if (-not (Test-Path $f)) { continue }
+  $f = Join-Path $DbDir "assets/$id.json"; if (-not (Test-Path $f)) { continue }
   $a = Get-Content $f -Raw -Encoding UTF8 | ConvertFrom-Json; $nv = $NIV.$id; $d = if ($null -ne $a.dec) { [int]$a.dec } else { 2 }
   # en nivå med en enda punkt blir en smal ruta (±0,05 %) så att den syns
   $z = foreach ($k in 's2', 's1', 'r1', 'r2') { $r = @($a.$k); $lo = [double]$r[0]; $hi = [double]$r[-1]; if ($hi - $lo -lt $lo * 0.0005) { $m = ($lo + $hi) / 2; $lo = $m * 0.9995; $hi = $m * 1.0005 }; $lo; $hi }

@@ -7,7 +7,7 @@
 # Körs: powershell -ExecutionPolicy Bypass -File scan.ps1 [-Out <mapp>] [-TopUS 12] [-TopSE 6] [-TopNO 5] [-TopEU 8] [-TopCA 3] [-TopCR 4]
 # Skriver i <Out>: scan-latest.json, scan-stats.json, market-us.json, market-se.json, market-eu.json, market-crypto.json,
 # market-sectors.json, market-earnings.json, hist-<id>.json, scans\<tid>.json
-param([string]$Out = (Join-Path $PSScriptRoot '..\data'), [int]$TopUS = 12, [int]$TopSE = 6, [int]$TopNO = 5, [int]$TopEU = 8, [int]$TopCA = 3, [int]$TopCR = 4, [int]$DeepN = 50)
+param([string]$Out = (Join-Path $PSScriptRoot '../data'), [int]$TopUS = 12, [int]$TopSE = 6, [int]$TopNO = 5, [int]$TopEU = 8, [int]$TopCA = 3, [int]$TopCR = 4, [int]$DeepN = 50)
 $ErrorActionPreference = 'Stop'
 $Out = [IO.Path]::GetFullPath($Out)
 New-Item -ItemType Directory -Force $Out, (Join-Path $Out 'scans') | Out-Null
@@ -403,7 +403,7 @@ $results = @(); $prev = Get-ChildItem (Join-Path $Out 'scans') -Filter '*.json' 
 $cache = @{}
 foreach ($f in $prev) {
   $old = Get-Content $f.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
-  $t0 = [DateTime]::Parse($old.at).ToUniversalTime()
+  $t0 = $(if ($old.at -is [datetime]) { $old.at.ToUniversalTime() } else { [DateTime]::Parse($old.at, [Globalization.CultureInfo]::InvariantCulture).ToUniversalTime() })
   if (($now - $t0).TotalHours -lt 20 -or [int]$old.v -lt 2) { continue }
   foreach ($c in $old.candidates) {
     $y = Ysym $c

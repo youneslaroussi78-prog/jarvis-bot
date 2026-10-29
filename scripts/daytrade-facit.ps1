@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 # -Cfg prövar andra inställningar (till exempel "costFloorR=0.15;noOrb=1"); -Tag skriver resultatet till daytrade-backtest-<tag>.json i stället
 if ($Cfg) { foreach ($kv in $Cfg -split ';') { $p2 = $kv -split '='; $DT_CFG[$p2[0].Trim()] = if ($p2[1] -match '^[\d.]+$') { [double]$p2[1] } else { $p2[1].Trim() } } }
 $btName = if ($Tag) { "daytrade-backtest-$Tag" } else { 'daytrade-backtest' }
-$data = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\data'))
+$data = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../data'))
 $nowU = (Get-Date).ToUniversalTime(); $nowT = [DateTimeOffset]::new($nowU).ToUnixTimeSeconds(); $enc = [Text.UTF8Encoding]::new($false)
 $se = [TimeZoneInfo]::FindSystemTimeZoneById('W. Europe Standard Time')
 function CostOf($cls) { switch ($cls) { 'Aktier' { 0.002 } 'Krypto' { 0.003 } default { 2 * (0.001 + 0.004) / 9.5 } } }

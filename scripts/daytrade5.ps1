@@ -9,7 +9,7 @@ param([switch]$Backtest, [string]$Only, [string]$Setups = 'sweep5,fvg5,vwap5,orb
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'daytrade-lib.ps1')
 . (Join-Path $PSScriptRoot 'daytrade5-engine.ps1')
-$data = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\data')); $arch = Join-Path $data 'bars5'; New-Item -ItemType Directory -Force $arch | Out-Null
+$data = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../data')); $arch = Join-Path $data 'bars5'; New-Item -ItemType Directory -Force $arch | Out-Null
 $nowU = (Get-Date).ToUniversalTime(); $enc = [Text.UTF8Encoding]::new($false); $se = [TimeZoneInfo]::FindSystemTimeZoneById('W. Europe Standard Time')
 # fler instrument för 5m-testet: ETF:er, europeiska index och fler aktier som rör sig mycket (urvalet gjort i dag, överlevnadsfel finns)
 $DT5_MORE = @(

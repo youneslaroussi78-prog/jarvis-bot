@@ -9,7 +9,9 @@
 # Körs: powershell -ExecutionPolicy Bypass -File facit.ps1 -Check
 param([string]$Add, [switch]$Check, [string]$Judge, [string]$Verdict, [string]$Lesson)
 $ErrorActionPreference = 'Stop'
-$File = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\references\facitlogg.md'))
+# Facitloggen ligger i data/ (privata repot jarvis-data) sedan 29 okt, så att molnkörningarna sparar den; references/ är reserv
+$File = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../data/facitlogg.md'))
+if (-not (Test-Path $File) -and (Test-Path (Join-Path $PSScriptRoot '../references/facitlogg.md'))) { $File = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../references/facitlogg.md')) }
 $sv = [Globalization.CultureInfo]::GetCultureInfo('sv-SE')
 function F($v, $d = 0) { if ($null -eq $v) { return '–' }; ([double]$v).ToString("N$d", $sv) }
 function Load {
@@ -27,7 +29,7 @@ function Entry($x) {
   [pscustomobject]$o
 }
 function Outcome($e, $days) {
-  $from = [DateTimeOffset]::new([datetime]::ParseExact($e.date, 'yyyy-MM-dd', $null)).ToUnixTimeSeconds()
+  $from = [DateTimeOffset]::new($(if ($e.date -is [datetime]) { [datetime]::SpecifyKind($e.date.Date, 'Unspecified') } else { [datetime]::ParseExact($e.date, 'yyyy-MM-dd', $null) })).ToUnixTimeSeconds()
   $to = $from + ($days + 1) * 86400
   $res = (Invoke-RestMethod -Uri "https://query2.finance.yahoo.com/v8/finance/chart/$([uri]::EscapeDataString($e.ysym))?period1=$from&period2=$to&interval=1d" -Headers @{ 'User-Agent' = 'Mozilla/5.0' } -TimeoutSec 30).chart.result[0]
   $q = $res.indicators.quote[0]; $sh = [double]$e.shift; $hs = @(); $ls = @(); $cs = @()
@@ -83,7 +85,7 @@ if ($Judge) {
 if ($Check) {
   $today = (Get-Date).Date; $changed = 0
   foreach ($e in $List) {
-    $age = ($today - [datetime]::ParseExact($e.date, 'yyyy-MM-dd', $null)).TotalDays
+    $age = ($today - $(if ($e.date -is [datetime]) { [datetime]::SpecifyKind($e.date.Date, 'Unspecified') } else { [datetime]::ParseExact($e.date, 'yyyy-MM-dd', $null) })).TotalDays
     try {
       if ($null -eq $e.o1 -and $age -ge 7) { $e.o1 = Outcome $e 7; $changed++; "1 v $($e.id): $($e.o1.text)" }
       if ($null -eq $e.o4 -and $age -ge 28) { $e.o4 = Outcome $e 28; $changed++; "4 v $($e.id): $($e.o4.text)" }

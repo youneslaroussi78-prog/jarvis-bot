@@ -3,7 +3,7 @@
 # Datakontroll: priset jämförs med Yahoo (två källor) och med förra körningen. Ett pris som källorna inte är överens om skrivs inte; då får
 # tillgången bara fältet dataWarn (syns i Jarvis) och raden "KONTROLL:" skrivs ut. Resultatet i data\watch\quality.json.
 $ErrorActionPreference = 'Stop'
-$out = Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) '..\data\watch'
+$out = Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) '../data/watch'
 New-Item -ItemType Directory -Force $out | Out-Null
 $assets = @(
   @{id='guld';   mkt='cfd';     tv='PEPPERSTONE:XAUUSD'; y='GC=F';    adj=$true}
@@ -21,7 +21,7 @@ $assets = @(
 $LIM = @{ srcPct = 3.0; jumpPct = 15.0; jumpPctCrypto = 25.0; shiftPct = 4.0 }
 # Djupanalys med bibelns verktyg (FVG, order block, likviditet, fib, pivåer, volymprofil m.fl.) mot nivåerna i Jarvis (från databasexporten)
 . (Join-Path $PSScriptRoot 'djupanalys.ps1')
-$EXP = Join-Path $PSScriptRoot '..\data\db-export\assets'
+$EXP = Join-Path $PSScriptRoot '../data/db-export/assets'
 $cols = @('close','change','high','low','RSI','RSI|240','MACD.macd','MACD.signal','SMA50','SMA200','ATR')
 $keys = @('price','chg','high','low','rsi','rsi4h','macd','macdSig','sma50','sma200','atr')
 $scan = @{}; $Q = [ordered]@{ ok = @(); warn = @(); err = @() }
@@ -69,7 +69,7 @@ foreach ($a in $assets) {
     try {
       $B = DeepBars $a.y
       if ($shift) { foreach ($set in $B.d, $B.h) { foreach ($row in $set) { for ($k = 1; $k -le 4; $k++) { $row[$k] -= $shift } } } }
-      $lv = if (Test-Path "$EXP\$($a.id).json") { Get-Content "$EXP\$($a.id).json" -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
+      $lv = if (Test-Path "$EXP/$($a.id).json") { Get-Content "$EXP/$($a.id).json" -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
       $tgt = @(@($lv.r2) + @($lv.r1) | Where-Object { [double]$_ -gt [double]$lv.bos })
       $plan = if ($lv -and [double]$lv.bos -gt [double]$lv.inval -and [double]$lv.inval -gt 0) { @{ side = 'long'; entry = [double]$lv.bos; stop = [double]$lv.inval; t1 = $(if ($tgt.Count) { [double]($tgt | Measure-Object -Minimum).Minimum } else { 0 }) } } else { $null }
       $dp = Deep $B.d $B.h $plan $(if ($null -ne $lv.dec) { [int]$lv.dec } else { 2 }) 'bevakning'

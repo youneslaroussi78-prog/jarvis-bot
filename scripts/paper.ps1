@@ -14,7 +14,7 @@
 param([switch]$Update, [string[]]$Open, [string]$Plan, [string]$Lesson, [string]$Text, [switch]$AllowB, [switch]$Notis,
   [string]$DataDir, [string]$BarsDir, [int64]$NowT = 0, [string]$ScanFile)
 $ErrorActionPreference = 'Stop'
-$Dir = if ($DataDir) { [IO.Path]::GetFullPath($DataDir) } else { [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\data\paper')) }
+$Dir = if ($DataDir) { [IO.Path]::GetFullPath($DataDir) } else { [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../data/paper')) }
 New-Item -ItemType Directory -Force $Dir | Out-Null
 $LedgerFile = Join-Path $Dir 'ledger.json'
 $now = if ($NowT) { [DateTimeOffset]::FromUnixTimeSeconds($NowT).UtcDateTime } else { (Get-Date).ToUniversalTime() }; $nowT = [DateTimeOffset]::new($now).ToUnixTimeSeconds()
@@ -226,8 +226,8 @@ if ($Notis) {
   return
 }
 if ($Open) {
-  $scan = Get-Content $(if ($ScanFile) { $ScanFile } else { Join-Path $PSScriptRoot '..\data\scan-latest.json' }) -Raw -Encoding UTF8 | ConvertFrom-Json
-  $takesFile = if ($ScanFile) { $null } else { Get-ChildItem (Join-Path $PSScriptRoot '..\data') -Filter 'takes-*.json' | Sort-Object Name | Select-Object -Last 1 }
+  $scan = Get-Content $(if ($ScanFile) { $ScanFile } else { Join-Path $PSScriptRoot '../data/scan-latest.json' }) -Raw -Encoding UTF8 | ConvertFrom-Json
+  $takesFile = if ($ScanFile) { $null } else { Get-ChildItem (Join-Path $PSScriptRoot '../data') -Filter 'takes-*.json' | Sort-Object Name | Select-Object -Last 1 }
   $takes = if ($takesFile) { (Get-Content $takesFile.FullName -Raw -Encoding UTF8 | ConvertFrom-Json).takes } else { $null }
   $plans = @{}
   if ($Plan) { foreach ($p in (ConvertFrom-Json -InputObject (Get-Content $Plan -Raw -Encoding UTF8))) { $plans[[string]$p.id] = $p } }
@@ -252,7 +252,7 @@ if ($Open) {
   }
   # Fed och amerikansk KPI: ingen paus sedan 27 okt (Devin: "fortsätta köra dina trades och lära dig"); trades inom 24 timmar före märks med nearEvent
   $calFile = Join-Path $Dir 'makrokalender.json'
-  $soon = @(); if (Test-Path $calFile) { $soon = @((Get-Content $calFile -Raw -Encoding UTF8 | ConvertFrom-Json).events | Where-Object { $et = [DateTimeOffset]::Parse($_.t).ToUnixTimeSeconds(); $et -gt $nowT -and $et -le $nowT + $RULES.eventNearH * 3600 } | Sort-Object { [DateTimeOffset]::Parse($_.t).ToUnixTimeSeconds() }) }
+  $soon = @(); if (Test-Path $calFile) { $soon = @((Get-Content $calFile -Raw -Encoding UTF8 | ConvertFrom-Json).events | Where-Object { $et = $(if ($_.t -is [datetime]) { [DateTimeOffset]$_.t.ToUniversalTime() } else { [DateTimeOffset]::Parse($_.t, [Globalization.CultureInfo]::InvariantCulture) }).ToUnixTimeSeconds(); $et -gt $nowT -and $et -le $nowT + $RULES.eventNearH * 3600 } | Sort-Object { $(if ($_.t -is [datetime]) { [DateTimeOffset]$_.t.ToUniversalTime() } else { [DateTimeOffset]::Parse($_.t, [Globalization.CultureInfo]::InvariantCulture) }).ToUnixTimeSeconds() }) }
   $nearEv = if ($soon.Count) { [string]$soon[0].label } else { $null }
   $GATES = 'htf', 'events', 'confluence', 'discount', 'bos', 'stop', 'rr', 'invalidation', 'risk'
   foreach ($id in ($Open -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })) {

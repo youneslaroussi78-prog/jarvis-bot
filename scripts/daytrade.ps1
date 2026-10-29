@@ -9,7 +9,7 @@
 #   daytrade.ps1 -Plans    skriver också planutkast för redo lägen i data\paper\plan-day-<tid>.json (granska innan -Open)
 param([switch]$Plans, [string]$Only)
 $ErrorActionPreference = 'Stop'
-$data = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\data'))
+$data = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../data'))
 $nowU = (Get-Date).ToUniversalTime(); $nowT = [DateTimeOffset]::new($nowU).ToUnixTimeSeconds()
 # Analysen (lägen, betyg, utfall) ligger i daytrade-lib.ps1, som backtestet och facit (daytrade-facit.ps1) också använder.
 . (Join-Path $PSScriptRoot 'daytrade-lib.ps1')
@@ -66,8 +66,8 @@ if (-not $Only) {
   "Steg 1: $scanned aktier på öppna börser, $($picked.Count) rör sig mest i dag och går vidare (plus olja, index, metaller och krypto)"
 }
 # makrokalendern (Fed, KPI) styr pausen; EIA-oljelagret (onsdagar 10.30 New York) räknas i biblioteket
-$cal = @(); try { $cal = @((Get-Content (Join-Path $data 'paper\makrokalender.json') -Raw -Encoding UTF8 | ConvertFrom-Json).events) } catch { }
-$calT = @(foreach ($e in $cal) { try { @{ t = [double][DateTimeOffset]::Parse($e.t).ToUnixTimeSeconds(); label = $e.label } } catch { } })
+$cal = @(); try { $cal = @((Get-Content (Join-Path $data 'paper/makrokalender.json') -Raw -Encoding UTF8 | ConvertFrom-Json).events) } catch { }
+$calT = @(foreach ($e in $cal) { try { @{ t = [double]$(if ($e.t -is [datetime]) { [DateTimeOffset]$e.t.ToUniversalTime() } else { [DateTimeOffset]::Parse($e.t, [Globalization.CultureInfo]::InvariantCulture) }).ToUnixTimeSeconds(); label = $e.label } } catch { } })
 
 $OUT = @()
 foreach ($ins in $INSTR) {
@@ -119,5 +119,5 @@ if ($Plans) {
       events = 'Kontrollera rubriker och kalender (EIA onsdagar 16.30, Fed, KPI) innan ordern läggs.'; correlation = 'Kontrollera mot öppna testtrades i samma sektor.'
       exit = 'En tredjedel vid mål 1 (2R) och stoppet till break-even, resten vid mål 2 eller vid dagens stängning.'
       gates = [ordered]@{ htf = $true; events = $true; confluence = (@($o.conf).Count -ge 2); discount = $true; bos = $true; stop = ($o.riskPct -le 4); rr = $true; invalidation = $true; risk = $true } } }
-  $pf = Join-Path $data "paper\plan-day-$((Get-Date).ToString('yyyyMMdd-HHmm')).json"; [IO.File]::WriteAllText($pf, (ConvertTo-Json -InputObject @($pl) -Depth 6), [Text.UTF8Encoding]::new($true)); "planutkast -> $pf"
+  $pf = Join-Path $data "paper/plan-day-$((Get-Date).ToString('yyyyMMdd-HHmm')).json"; [IO.File]::WriteAllText($pf, (ConvertTo-Json -InputObject @($pl) -Depth 6), [Text.UTF8Encoding]::new($true)); "planutkast -> $pf"
 }

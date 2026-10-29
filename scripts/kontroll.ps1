@@ -5,16 +5,16 @@
 # Kontrollerar priser och datakontroll, scannern, att alla schemalagda körningar har gått, bevakningslistans besked mot nivåerna,
 # dagens besked, testportföljen, makrokalendern, inkorgen och sidans fellogg. Skriver data\health.json (till meta/health i Jarvis)
 # och raderna "HÄLSA: ..." och "PROBLEM: ...". Kontrollen ändrar aldrig nivåer, besked eller trades.
-param([string]$Run, [switch]$Fail, [string]$Note, [string]$DbDir = (Join-Path $PSScriptRoot '..\data\db-export'))
+param([string]$Run, [switch]$Fail, [string]$Note, [string]$DbDir = (Join-Path $PSScriptRoot '../data/db-export'))
 $ErrorActionPreference = 'Stop'
-$data = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\data'))
+$data = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../data'))
 $enc = [Text.UTF8Encoding]::new($false)
 $now = Get-Date; $nowU = $now.ToUniversalTime()
 $sv = [Globalization.CultureInfo]::GetCultureInfo('sv-SE')
 function J($f) { if (-not (Test-Path $f)) { return $null }; try { $o = Get-Content $f -Raw -Encoding UTF8 | ConvertFrom-Json; if ($o.PSObject.Properties.Name -contains 'data' -and $o.PSObject.Properties.Name -contains 'version') { $o.data } else { $o } } catch { $null } }
-function Db($col, $id) { J (Join-Path $DbDir "$col\$id.json") }
+function Db($col, $id) { J (Join-Path $DbDir "$col/$id.json") }
 function DbAll($col) { $d = Join-Path $DbDir $col; if (-not (Test-Path $d)) { return @() }; @(Get-ChildItem $d -Filter *.json | ForEach-Object { $o = J $_.FullName; if ($o) { $o | Add-Member -NotePropertyName _id -NotePropertyValue $_.BaseName -Force; $o } }) }
-function T($s) { if (-not $s) { return $null }; try { [DateTimeOffset]::Parse([string]$s, [Globalization.CultureInfo]::InvariantCulture).LocalDateTime } catch { $null } }
+function T($s) { if (-not $s) { return $null }; if ($s -is [datetime]) { return $s.ToLocalTime() }; try { [DateTimeOffset]::Parse([string]$s, [Globalization.CultureInfo]::InvariantCulture).LocalDateTime } catch { $null } }
 function Age($dt) { if (-not $dt) { return [double]::PositiveInfinity }; ($now - $dt).TotalHours }
 function Hm($h) { if ([double]::IsInfinity($h)) { 'aldrig' } elseif ($h -lt 1) { "$([math]::Round($h * 60)) min" } elseif ($h -lt 48) { "$([math]::Round($h, 1).ToString($sv)) h" } else { "$([math]::Round($h / 24)) dagar" } }
 function N($v) { if ($null -eq $v -or "$v" -eq '') { return [double]::NaN }; try { [double]$v } catch { [double]::NaN } }
@@ -75,10 +75,10 @@ $wd = [int]$now.DayOfWeek -in 1..5; $dayHours = $wd -and $now.Hour -ge 9 -and $n
 
 # ---------- priser och datakontroll ----------
 try {
-  $pLocal = J (Join-Path $data 'watch\prices.json'); $pDb = Db 'meta' 'prices'
+  $pLocal = J (Join-Path $data 'watch/prices.json'); $pDb = Db 'meta' 'prices'
   $pAt = @((T $pLocal.at), (T $pDb.at)) | Where-Object { $_ } | Sort-Object -Descending | Select-Object -First 1
   $maxH = if ($dayHours) { 2.5 } else { 14.5 }; $h = Age $pAt
-  $q = J (Join-Path $data 'watch\quality.json'); $qe = @($q.err | Where-Object { $_ }); $qw = @($q.warn | Where-Object { $_ }); $qo = @($q.ok | Where-Object { $_ })
+  $q = J (Join-Path $data 'watch/quality.json'); $qe = @($q.err | Where-Object { $_ }); $qw = @($q.warn | Where-Object { $_ }); $qo = @($q.ok | Where-Object { $_ })
   $items = @($qe | ForEach-Object { "Fel: $_" }) + @($qw | ForEach-Object { "Varning: $_" })
   $lvl = if ($h -gt 2 * $maxH -or $qe.Count) { 'fel' } elseif ($h -gt $maxH -or $qw.Count) { 'varning' } else { 'ok' }
   Add 'prices' 'Priser' $lvl "Senast uppdaterade för $(Hm $h) sedan$(if ($h -gt $maxH) { " (ska vara högst $(Hm $maxH) $(if ($dayHours) { 'när börserna är öppna' } else { 'utanför börstid' }))" }). $(if ($q) { "$($qo.Count) av $($qo.Count + $qe.Count) kontrollerade mot två källor." })" $items
@@ -100,7 +100,7 @@ try {
 try {
   $items = @(); $lvl = 'ok'
   foreach ($a in (DbAll 'assets')) {
-    $id = $a._id; $u = J (Join-Path $data "watch\upd-$id.json"); $p = if ($u -and (Ok (N $u.price))) { N $u.price } else { N $a.price }
+    $id = $a._id; $u = J (Join-Path $data "watch/upd-$id.json"); $p = if ($u -and (Ok (N $u.price))) { N $u.price } else { N $a.price }
     $inv = N $a.inval; $bos = N $a.bos; $nm = if ($a.name) { $a.name } else { $id }
     if ($u.dataWarn -or $a.dataWarn) { $items += "$($nm): $(if ($u.dataWarn) { $u.dataWarn } else { $a.dataWarn })"; $lvl = 'fel' }
     if ((Ok $inv) -and $p -lt $inv -and $a.status -ne 'kopinte') { $items += "$nm $(F $p ($a.dec)) är under fel om-nivån $(F $inv ($a.dec)) men beskedet är '$($a.status)': nivåerna behöver ses över"; if ($lvl -eq 'ok') { $lvl = 'varning' } }
@@ -111,7 +111,7 @@ try {
 
 # ---------- dagens besked ----------
 try {
-  $b = Db 'meta' 'brief'; $bd = if ($b.date) { [datetime]::ParseExact($b.date, 'yyyy-MM-dd', $null) } else { $null }
+  $b = Db 'meta' 'brief'; $bd = if ($b.date) { $(if ($b.date -is [datetime]) { $b.date.Date } else { [datetime]::ParseExact($b.date, 'yyyy-MM-dd', $null) }) } else { $null }
   $lvl = 'ok'; $txt = "Skrivet $($b.date) $($b.time)."
   if ($wd -and ($now.Hour -gt 8 -or ($now.Hour -eq 8 -and $now.Minute -ge 30)) -and (-not $bd -or $bd.Date -lt $now.Date)) { $lvl = 'varning'; $txt += ' Morgonens besked saknas, så texten kan ha gamla priser.' }
   Add 'brief' 'Dagens besked' $lvl $txt @()
@@ -119,7 +119,7 @@ try {
 
 # ---------- testportföljen ----------
 try {
-  $L = J (Join-Path $data 'paper\ledger.json'); $items = @(); $lvl = 'ok'
+  $L = J (Join-Path $data 'paper/ledger.json'); $items = @(); $lvl = 'ok'
   if (-not $L) { throw 'ledger.json saknas' }
   $ids = @($L.trades | ForEach-Object { $_.id }); $dup = @($ids | Group-Object | Where-Object { $_.Count -gt 1 } | ForEach-Object { $_.Name }); if ($dup.Count) { $items += "Dubbla trade-id: $($dup -join ', ')"; $lvl = 'fel' }
   $act = @($L.trades | Where-Object { $_.status -in 'väntar', 'öppen' }); $nowT = [DateTimeOffset]::new($nowU).ToUnixTimeSeconds()
@@ -135,16 +135,16 @@ try {
   $eqLast = if (@($L.equity).Count) { N (@($L.equity)[-1][1]) } else { $eq }
   if (-not (Ok $eqLast) -or $eqLast -le 0) { $items += 'Portföljvärdet går inte att räkna'; $lvl = 'fel' }
   # gränsen kommer från motorn: 10 % under lärfasen (de första 30 avslutade), annars 5 %
-  $ds = J (Join-Path $data 'paper\db-state.json'); $maxR = if ($ds -and (N $ds.stats.maxOpenRiskPct) -gt 0) { N $ds.stats.maxOpenRiskPct } else { 5 }
+  $ds = J (Join-Path $data 'paper/db-state.json'); $maxR = if ($ds -and (N $ds.stats.maxOpenRiskPct) -gt 0) { N $ds.stats.maxOpenRiskPct } else { 5 }
   if ((Ok $eqLast) -and $eqLast -gt 0 -and $openRisk / $eqLast * 100 -gt $maxR + 0.05) { $items += "Total risk $(F ($openRisk / $eqLast * 100) 1) % (högst $(F $maxR 0) %)"; $lvl = 'fel' }
   $uns = @($L.events | Where-Object { $_.sent -eq $false -and $nowT - [double]$_.t -gt 3 * 3600 }); if ($uns.Count) { $items += "$($uns.Count) händelser har inte skickats som notis"; if ($lvl -eq 'ok') { $lvl = 'varning' } }
-  $ue = J (Join-Path $data 'paper\update-errors.json'); foreach ($e in @($ue.errors)) { if ($e) { $items += "Uppföljningen: $e"; $lvl = 'fel' } }
+  $ue = J (Join-Path $data 'paper/update-errors.json'); foreach ($e in @($ue.errors)) { if ($e) { $items += "Uppföljningen: $e"; $lvl = 'fel' } }
   Add 'paper' 'Testportföljen' $lvl "$($act.Count) aktiva, total risk $(F ($openRisk / [math]::Max(1, $eqLast) * 100) 1) %, värde $(F $eqLast 0) kr." $items
 } catch { Add 'paper' 'Testportföljen' 'fel' "Kunde inte kontrollera: $($_.Exception.Message)" @() }
 
 # ---------- makrokalendern ----------
 try {
-  $mk = J (Join-Path $data 'paper\makrokalender.json'); $fut = @($mk.events | Where-Object { (T $_.t) -gt $now } | Sort-Object { T $_.t })
+  $mk = J (Join-Path $data 'paper/makrokalender.json'); $fut = @($mk.events | Where-Object { (T $_.t) -gt $now } | Sort-Object { T $_.t })
   $lvl = if (-not $fut.Count) { 'fel' } elseif ((T $fut[-1].t) -lt $now.AddDays(30)) { 'varning' } else { 'ok' }
   Add 'macro' 'Makrokalendern' $lvl $(if ($fut.Count) { "Nästa: $($fut[0].label). $($fut.Count) kommande besked inlagda$(if ($lvl -eq 'varning') { '; fyll på med fler än en månad framåt' })." } else { 'Inga kommande Fed- eller KPI-datum: testtrades före besked märks inte och rutan Nästa händelse blir tom.' }) @()
 } catch { Add 'macro' 'Makrokalendern' 'fel' "Kunde inte läsa: $($_.Exception.Message)" @() }

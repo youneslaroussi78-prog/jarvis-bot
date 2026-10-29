@@ -8,7 +8,7 @@
 param([switch]$Pine)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'djupanalys.ps1')
-$data = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\data'))
+$data = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../data'))
 $sv = [Globalization.CultureInfo]::GetCultureInfo('sv-SE')
 # id, Yahoo-symbol, symbolen i TradingView, decimaler
 $ASSETS = @(
