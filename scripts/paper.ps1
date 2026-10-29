@@ -35,7 +35,7 @@ $RULES = [ordered]@{
   maxOpenRiskPctLearn = 10
   # dagsmål (Younes 2026-10-28: "jag vill göra 2 % i avkastning per dag ... trada upp till 2 %, sen är du klar"): när dagens stängda trades
   # gett så här många procent av portföljvärdet vid dagens början läggs inga nya testtrades den dagen; öppna positioner följer sin plan
-  dailyTargetPct = 2
+  dailyTargetPct = 2; afterTargetRiskPct = 1
   text = @(
     'Ingen trade utan nedskriven handelsplan: tes, HTF och regim, nivå med minst två verktyg, BOS-villkor, invalidering, två motargument, händelser, korrelation, exitplan och alla nio grindar (references\handelsplan.md).',
     'Swing: bara A-betyg, minst 1:2, ingen rapport inom 14 dagar, stopp högst 8 % bort. Köp vid BOS; ordern förfaller efter 7 dagar eller om kursen går under stoppet först.',
@@ -47,7 +47,7 @@ $RULES = [ordered]@{
     'Turbo och mini simuleras med knockout: under stoppet med marginal och under S2, högst 5 gångers hävstång för swing och 10 för daytrade. Gap förbi knockout ger förlust över 1R.',
     'Kostnader: 0,1 % per affär för aktier, 0,15 % för krypto, plus 0,4 % spread på produktens värde och cirka 7 % finansiering per år för turbo och mini. Resultat i kronor med dollarkursen vid köpet.',
     'Blankning (short) med samma regler spegelvänt: BOS nedåt, stopp ovanför, mål vid stöd under. Bara i nedtrend, aldrig in i översålt (RSI under 30), högst 3 blankningar samtidigt, halv risk i risk-on. Lånekostnad cirka 2 % per år för aktier och 10 % för krypto; Mini S och Turbo S har knockout ovanför stoppet.',
-    'Dagsmål (YL 28 okt 2026): +2 % av portföljvärdet per handelsdag, räknat på stängda trades sedan midnatt mot värdet vid dagens början. När målet är nått läggs inga nya testtrades den dagen; öppna positioner följer sin plan. Lägen tas både för köp och blankning i aktier, index, ädelmetaller och krypto, alltid enligt reglerna ovan. YL 29 okt: daytrades med betyg A eller B, swing B med -AllowB, inga nya daytrades från kl 21, blankning lika gärna som köp.')
+    'Dagsmål (YL 28 okt 2026): +2 % av portföljvärdet per handelsdag, räknat på stängda trades sedan midnatt mot värdet vid dagens början. När målet är nått tas bara säkra lägen resten av dagen (YL 29 okt: betyg A, högst 1 % risk), och faller dagens resultat under målet igen läggs inga fler; öppna positioner följer sin plan. Lägen tas både för köp och blankning i aktier, index, ädelmetaller och krypto, alltid enligt reglerna ovan. YL 29 okt: daytrades med betyg A eller B, swing B med -AllowB, inga nya daytrades från kl 21, blankning lika gärna som köp.')
 }
 function N($v) { if ($null -eq $v -or $v -is [string]) { return [double]::NaN }; [double]$v }
 function Ok([double]$v) { -not ([double]::IsNaN($v) -or [double]::IsInfinity($v)) }
@@ -239,7 +239,12 @@ if ($Open) {
   # Dagsmål (Younes 2026-10-28, handelsplan.md avsnitt 9): dagens stängda trades mot portföljvärdet vid dagens början (sista värdekurvepunkten före midnatt)
   $dayBase = [double]$L.start; foreach ($p in @($L.equity)) { if ([double]$p[0] -lt $today0 -and [double]$p[1] -gt 0) { $dayBase = [double]$p[1] } }
   $dayKr = (($closedTr | Where-Object { [double]$_.closed -ge $today0 } | Measure-Object resultKr -Sum).Sum)
-  if ($null -ne $dayKr -and $dayBase -gt 0 -and $dayKr / $dayBase * 100 -ge $RULES.dailyTargetPct) { "Dagsmålet +$($RULES.dailyTargetPct) % är nått ($(F $dayKr 0) kr i dag): inga nya testtrades förrän i morgon."; return }
+  # YL 29 okt: "2 % är målet men om du har en säker trade efter det så kan du köra igen samma dag. Kör bara säkra." Efter målet bara A-lägen
+  # med högst 1 % risk; har dagen nått målet och sedan fallit under det igen läggs inga fler den dagen
+  $afterTarget = $false; $reached = $false; $cum = 0.0
+  foreach ($x in @($closedTr | Where-Object { [double]$_.closed -ge $today0 })) { $cum += [double]$x.resultKr; if ($dayBase -gt 0 -and $cum / $dayBase * 100 -ge $RULES.dailyTargetPct) { $reached = $true } }
+  if ($null -ne $dayKr -and $dayBase -gt 0 -and $dayKr / $dayBase * 100 -ge $RULES.dailyTargetPct) { $afterTarget = $true; "Dagsmålet +$($RULES.dailyTargetPct) % är nått ($(F $dayKr 0) kr i dag): bara säkra lägen nu (betyg A, högst $($RULES.afterTargetRiskPct) % risk)." }
+  elseif ($reached) { "Dagsmålet nåddes i dag men resultatet har fallit till $(F $dayKr 0) kr: inga nya testtrades förrän i morgon."; return }
   # lärfas: pausreglerna och taken för antalet gäller först när learnTrades trades är avslutade
   $learning = $closedTr.Count -lt $RULES.learnTrades
   if ($learning) { "Lärfas: $($closedTr.Count) av $($RULES.learnTrades) trades avslutade. Ingen paus efter förluster och inget tak för antalet." }
@@ -267,7 +272,7 @@ if ($Open) {
     $no = @($GATES | Where-Object { $pl.gates.$_ -ne $true }); if ($no.Count) { $why += "grind inte uppfylld: $($no -join ', ')" }
     $c = @($scan.candidates) + @($scan.soon) | Where-Object { $_ -and $_.id -eq $id } | Select-Object -First 1
     if (-not $c -and $hz -eq 'day' -and $pl.ysym) {
-      $c = [pscustomobject]@{ id = $id; side = $(if ($pl.side -eq 'short') { 'short' } else { 'long' }); symbol = $pl.symbol; name = $pl.name; tv = $pl.tv; ysym = $pl.ysym; market = $pl.market; currency = $pl.currency; sector = $pl.sector; sectorSv = $pl.sectorSv; strategy = 'daytrade'; strategyName = 'Daytrade (egen setup)'; grade = 'egen'; score = $null; why = $pl.thesis; dec = $pl.dec; price = $pl.entry; earningsDays = $pl.earningsDays; entry = $null; stop = $null; t1 = $null; t2 = $null; t1Kind = 'nivå' }
+      $c = [pscustomobject]@{ id = $id; side = $(if ($pl.side -eq 'short') { 'short' } else { 'long' }); symbol = $pl.symbol; name = $pl.name; tv = $pl.tv; ysym = $pl.ysym; market = $pl.market; currency = $pl.currency; sector = $pl.sector; sectorSv = $pl.sectorSv; strategy = 'daytrade'; strategyName = 'Daytrade (egen setup)'; grade = $(if ($pl.grade) { [string]$pl.grade } else { 'egen' }); score = $null; why = $pl.thesis; dec = $pl.dec; price = $pl.entry; earningsDays = $pl.earningsDays; entry = $null; stop = $null; t1 = $null; t2 = $null; t1Kind = 'nivå' }
     }
     if (-not $c) { "NEJ $($id): finns inte i senaste scanningen (en egen setup måste vara daytrade med ysym, market, entry, stop, t1 och t2 i planen)"; continue }
     if ($hz -eq 'day' -and $c.strategy -ne 'daytrade') { $c = $c.PSObject.Copy(); $c.strategy = 'daytrade'; $c.strategyName = "Daytrade ($($c.strategyName))" }
@@ -293,6 +298,7 @@ if ($Open) {
       if ($stopPct -gt $RULES.dayMaxStopPct) { $why += "stopp $(F $stopPct 1) % bort (daytrade högst $($RULES.dayMaxStopPct) %)" }
     }
     if ($rr1 -lt 1.995) { $why += "R/R 1:$(F $rr1 2)" }
+    if ($afterTarget -and $c.grade -ne 'A') { $why += "dagsmålet är nått: bara A-lägen (betyg $($c.grade))" }
     # Produkt: underliggande, turbo eller mini
     $ptype = if ($pl.product.type) { [string]$pl.product.type } else { 'underliggande' }
     $prod = [ordered]@{ type = $ptype; ko = $null; financing = $null; stopLoss = $null; lev = 1.0; capitalKr = $null }
@@ -337,6 +343,7 @@ if ($Open) {
     $capPerUnit = if ($null -ne $fin) { [math]::Abs($entry - $fin) * $fx } else { $entry * $fx }
     if (Ok $alloc) { $qty = $eq * $alloc / 100 / $capPerUnit }
     else { $qty = $riskKr / $perUnit; $maxQty = $eq * $RULES.maxPositionPct / 100 / $capPerUnit; if ($qty -gt $maxQty) { $qty = $maxQty } }
+    if ($afterTarget -and $qty * $perUnit -gt $eq * $RULES.afterTargetRiskPct / 100) { $qty = $eq * $RULES.afterTargetRiskPct / 100 / $perUnit }
     # hela aktier, utom krypto och daytrades i index och råvaror via certifikat (en turbo på DAX motsvarar t.ex. 0,01 index per certifikat)
     if ($c.market -eq 'Krypto' -or $pl.fractional -eq $true) { $qty = [math]::Round($qty, 6) } else { $qty = [math]::Floor($qty) }
     if ($qty -le 0) { "NEJ $($id): för dyr per aktie för risken"; continue }

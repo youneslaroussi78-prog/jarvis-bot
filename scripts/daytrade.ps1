@@ -111,7 +111,7 @@ if ($Plans) {
     # förslag på andel av kapitalet (allocPct): stoppet kostar cirka 2 % av portföljen för A och 1,5 % för B, högst hela kapitalet; Jarvis justerar efter läget
     $stopP = [math]::Abs($o.entry - $o.stop) / $o.entry * 100; $allocD = [math]::Max(1, [math]::Min(100, [math]::Round($(if ($o.grade -eq 'A') { 2 } else { 1.5 }) / ($stopP * $lev) * 100, 0)))
     [ordered]@{ id = $o.id; horizon = 'day'; side = $o.side; product = $prodD; fractional = (-not $isStock); symbol = $o.symbol; name = $o.name; ysym = $o.ysym; tv = $o.tv; market = $o.market; sector = $o.sector; currency = $o.currency; dec = $o.dec
-      entry = $o.entry; stop = $o.stop; t1 = $o.t1; t2 = $o.t2; allocPct = $allocD
+      entry = $o.entry; stop = $o.stop; t1 = $o.t1; t2 = $o.t2; allocPct = $allocD; grade = $o.grade
       thesis = "$($o.setupName). $($o.why). UTKAST: granska nyheterna innan ordern läggs."
       htf = "Dagstrend $(@{ 1 = 'upp'; 0 = 'sidled'; -1 = 'ned' }[[int]$o.trendD]) (pris mot 20-dagars), VWAP $(Fm $o.vwap $o.dec), relativ volym $($o.relVol)."
       level = "Gårdagens high/low $(Fm $o.pdh $o.dec)/$(Fm $o.pdl $o.dec), dagens high/low $(Fm $o.hod $o.dec)/$(Fm $o.lod $o.dec)$(if ($o.orh) { ", öppningsrange $(Fm $o.orl $o.dec)–$(Fm $o.orh $o.dec)" })"

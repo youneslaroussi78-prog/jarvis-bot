@@ -101,3 +101,7 @@ YL kopia av Jarvis sedan 2026-10-28: här ändras reglerna när YL säger till, 
 - **Fördelning i stället för fast risk:** varje plan har `allocPct`, andelen av portföljvärdet i traden (upp till 100 %). Jarvis väljer andelen efter hur starkt läget är; en trade kan få hela kapitalet. Alla aktiva trades tillsammans högst hela värdet. Risken blir insatsen × stoppavståndet × hävstången. Total risk högst 10 % under lärfasen ligger kvar som spärr, så att en enda stopp med hävstång inte tar en stor del av portföljen.
 - **Hävstång och blankning:** turbo och mini (långa och korta) för index, råvaror, metaller och krypto, högst 10x för daytrade och 5x för swing. Daytrade-utkasten föreslår turbo 9,5x även för krypto.
 - **Metaller och krypto i varje körning:** guld, silver, koppar, btc, eth, sol och xrp bedöms varje gång, åt båda håll.
+
+**YL 2026-10-29, kväll:** "2 % är målet men om du har en säker trade efter det så kan du köra igen samma dag. Kör bara säkra."
+
+- **Efter dagsmålet:** nya trades samma dag bara med betyg A och högst 1 % risk (paper.ps1 krymper insatsen). Har dagen nått +2 % och sedan fallit under igen läggs inga fler den dagen. Det ersätter "inga nya när målet är nått" från 28 okt.
