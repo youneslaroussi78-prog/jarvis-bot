@@ -84,7 +84,7 @@ $BOURSE = @{ 'USA' = @('Eastern Standard Time', '16:00'); 'Kanada' = @('Eastern 
   'Schweiz' = @('W. Europe Standard Time', '17:30'); 'Italien' = @('W. Europe Standard Time', '17:30'); 'Spanien' = @('W. Europe Standard Time', '17:30'); 'Österrike' = @('W. Europe Standard Time', '17:30') }
 function DayEnd($market, [int64]$t) {
   $cl = $BOURSE[[string]$market]; if (-not $cl) { $cl = @('W. Europe Standard Time', '23:00') }
-  $tz = [TimeZoneInfo]::FindSystemTimeZoneById($cl[0])
+  $tz = try { [TimeZoneInfo]::FindSystemTimeZoneById($cl[0]) } catch { [TimeZoneInfo]::FindSystemTimeZoneById(@{ 'W. Europe Standard Time' = 'Europe/Stockholm'; 'Eastern Standard Time' = 'America/New_York'; 'GMT Standard Time' = 'Europe/London'; 'GTB Standard Time' = 'Europe/Helsinki' }[$cl[0]]) }   # reserv med IANA-namn för Linux
   $local = [TimeZoneInfo]::ConvertTimeFromUtc([DateTimeOffset]::FromUnixTimeSeconds($t).UtcDateTime, $tz)
   $close = [timespan]$cl[1]
   $end = [DateTimeOffset]::new([TimeZoneInfo]::ConvertTimeToUtc([datetime]::SpecifyKind($local.Date + $close, 'Unspecified'), $tz)).ToUnixTimeSeconds()

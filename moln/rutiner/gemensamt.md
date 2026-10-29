@@ -8,7 +8,7 @@ Du kör i Anthropics moln (Ubuntu, ingen dator hos YL behövs). Två repon är u
 
 ```bash
 cd /home/user/jarvis-bot
-git checkout ylkopia 2>/dev/null || true
+git fetch -q origin ylkopia && git checkout -q -B ylkopia origin/ylkopia   # alltid senaste koden, inte en gammal kopia
 ln -sfn /home/user/jarvis-data /home/user/jarvis-bot/data
 export TZ=Europe/Stockholm
 command -v pwsh >/dev/null || bash moln/setup.sh

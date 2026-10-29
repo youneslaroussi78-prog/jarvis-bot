@@ -10,7 +10,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'daytrade-lib.ps1')
 . (Join-Path $PSScriptRoot 'daytrade5-engine.ps1')
 $data = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../data')); $arch = Join-Path $data 'bars5'; New-Item -ItemType Directory -Force $arch | Out-Null
-$nowU = (Get-Date).ToUniversalTime(); $enc = [Text.UTF8Encoding]::new($false); $se = [TimeZoneInfo]::FindSystemTimeZoneById('W. Europe Standard Time')
+$nowU = (Get-Date).ToUniversalTime(); $enc = [Text.UTF8Encoding]::new($false); $se = TzFind('W. Europe Standard Time')
 # fler instrument för 5m-testet: ETF:er, europeiska index och fler aktier som rör sig mycket (urvalet gjort i dag, överlevnadsfel finns)
 $DT5_MORE = @(
   foreach ($t in 'SPY', 'QQQ', 'IWM', 'GLD', 'SLV', 'USO', 'SMH', 'TLT') { @{ id = "e-$($t.ToLower())"; y = $t; tv = "AMEX:$t"; name = $t; mk = 'USA'; sector = 'ETF'; open = @('09:30', 'Eastern Standard Time'); dec = 2; stock = $true } }
@@ -37,7 +37,7 @@ function Archive($ins, $new) {
 }
 # sessioner per handelsdag: öppning, slut, dagens början (terminer 18.00 New York dagen före, krypto midnatt UTC) och UTC-midnatt för dagsdatan
 function Sessions5($ins, [double[]]$tA) {
-  $tz = [TimeZoneInfo]::FindSystemTimeZoneById($ins.open[1]); $dates = [Collections.Generic.SortedSet[datetime]]::new()
+  $tz = TzFind($ins.open[1]); $dates = [Collections.Generic.SortedSet[datetime]]::new()
   foreach ($t0 in $tA) { [void]$dates.Add([TimeZoneInfo]::ConvertTimeFromUtc([DateTimeOffset]::FromUnixTimeSeconds([int64]$t0).UtcDateTime, $tz).Date) }
   $S = @{ ds = [Collections.Generic.List[double]]::new(); so = [Collections.Generic.List[double]]::new(); se = [Collections.Generic.List[double]]::new(); dm = [Collections.Generic.List[double]]::new() }
   foreach ($dt in $dates) { if ([int]$dt.DayOfWeek -in 0, 6) { continue }

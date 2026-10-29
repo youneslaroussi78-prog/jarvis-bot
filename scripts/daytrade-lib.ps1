@@ -76,11 +76,14 @@ function Fm($v, $d) { ([double]$v).ToString("N$d", $script:svC) }
 function Rn($v, $d) { [math]::Round([double]$v, $d) }
 # mål 1 räknas från avrundade entry och stopp och avrundas utåt, så att R/R aldrig blir under 1:2 (WTI 26 okt blev 1:1,96 och nekades)
 function T1R($s, $d) { $g = if ($s.side -eq 'short') { -1 } else { 1 }; $e = Rn $s.entry $d; $st = Rn $s.stop $d; $m = [math]::Pow(10, $d); $v = [math]::Max($g * $s.t1, $g * ($e + $g * 2 * [math]::Abs($e - $st))) * $g; if ($g -gt 0) { [math]::Ceiling($v * $m - 1e-9) / $m } else { [math]::Floor($v * $m + 1e-9) / $m } }
+# Tidszoner: Windows-namnen fungerar på Linux bara när ICU känner igen dem (FLE blir Europe/Kiev, som saknas i molnets Ubuntu), därför en reserv med IANA-namn
+$TZ_IANA = @{ 'W. Europe Standard Time' = 'Europe/Stockholm'; 'Eastern Standard Time' = 'America/New_York'; 'GMT Standard Time' = 'Europe/London'; 'GTB Standard Time' = 'Europe/Helsinki'; 'FLE Standard Time' = 'Europe/Helsinki' }
+function TzFind([string]$id) { try { [TimeZoneInfo]::FindSystemTimeZoneById($id) } catch { if ($TZ_IANA[$id]) { [TimeZoneInfo]::FindSystemTimeZoneById($TZ_IANA[$id]) } else { throw } } }
 # öppning och dagens slut (unix) för dagen som tidpunkten atU (UTC) ligger i, i instrumentets tidszon
-function SessionOpenAt($open, [datetime]$atU) { $tz = [TimeZoneInfo]::FindSystemTimeZoneById($open[1]); $loc = [TimeZoneInfo]::ConvertTimeFromUtc($atU, $tz)
+function SessionOpenAt($open, [datetime]$atU) { $tz = TzFind($open[1]); $loc = [TimeZoneInfo]::ConvertTimeFromUtc($atU, $tz)
   [DateTimeOffset]::new([TimeZoneInfo]::ConvertTimeToUtc([datetime]::SpecifyKind($loc.Date + [timespan]$open[0], 'Unspecified'), $tz)).ToUnixTimeSeconds() }
 function SessionEndAt($mk, [datetime]$atU) { $c0 = $DT_CLOSE[$mk]; if (-not $c0) { $c0 = @('W. Europe Standard Time', '23:00') }; SessionOpenAt @($c0[1], $c0[0]) $atU }
-function EiaAt([datetime]$atU) { $etz = [TimeZoneInfo]::FindSystemTimeZoneById('Eastern Standard Time'); $eloc = [TimeZoneInfo]::ConvertTimeFromUtc($atU, $etz)
+function EiaAt([datetime]$atU) { $etz = TzFind('Eastern Standard Time'); $eloc = [TimeZoneInfo]::ConvertTimeFromUtc($atU, $etz)
   if ($eloc.DayOfWeek -ne 'Wednesday') { return 0 }; [DateTimeOffset]::new([TimeZoneInfo]::ConvertTimeToUtc([datetime]::SpecifyKind($eloc.Date + [timespan]'10:30', 'Unspecified'), $etz)).ToUnixTimeSeconds() }
 # kostnad tur och retur i andel av underliggande: aktier 0,2 %, krypto 0,3 %, index och råvaror via turbo 9,5x (courtage 0,1 % och spread 0,4 % på produktens värde, två gånger)
 function DayCostPct($ins) { if ($ins.stock) { 0.002 } elseif ($ins.mk -eq 'Krypto') { 0.003 } else { 2 * (0.001 + 0.004) / 9.5 } }
@@ -171,7 +174,7 @@ function Analyze($ins, $X, $D, [double]$atT, $ctx) {
       $h60 = [math]::Max([math]::Max($hA[$oS], $hA[$oS + 1]), [math]::Max($hA[$oS + 2], $hA[$oS + 3])); $l60 = [math]::Min([math]::Min($lA[$oS], $lA[$oS + 1]), [math]::Min($lA[$oS + 2], $lA[$oS + 3])); $m60 = ($h60 + $l60) / 2
       if ($px -le $h60 + 0.3 * $atr15 -and $px -ge $m60) { $setups += DtMk 'orb60' 'ORB 60 min: utbrott över första timmen' 'long' ($h60 + $buf) $m60 "Första timmen $(Fm $l60 $dec)–$(Fm $h60 $dec); köp vid utbrott över $(Fm $h60 $dec), stopp i rangens mitt" @('Öppningsrange 60 min', $(if ($px -gt $vwap) { 'Över VWAP' })) $lv }
       if ($px -ge $l60 - 0.3 * $atr15 -and $px -le $m60) { $setups += DtMk 'orb60' 'ORB 60 min: utbrott under första timmen' 'short' ($l60 - $buf) $m60 "Första timmen $(Fm $l60 $dec)–$(Fm $h60 $dec); blanka vid utbrott under $(Fm $l60 $dec), stopp i rangens mitt" @('Öppningsrange 60 min', $(if ($px -lt $vwap) { 'Under VWAP' })) $lv } }
-  } $hourSe = [TimeZoneInfo]::ConvertTimeFromUtc($atU, [TimeZoneInfo]::FindSystemTimeZoneById('W. Europe Standard Time')).Hour
+  } $hourSe = [TimeZoneInfo]::ConvertTimeFromUtc($atU, (TzFind 'W. Europe Standard Time')).Hour
   foreach ($s in $setups) {
     $g = if ($s.side -eq 'short') { -1 } else { 1 }; $dist = $g * ($s.entry - $px) / $atr15
     $flags = @(); $score = 50

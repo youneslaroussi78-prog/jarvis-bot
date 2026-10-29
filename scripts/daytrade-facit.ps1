@@ -14,7 +14,7 @@ if ($Cfg) { foreach ($kv in $Cfg -split ';') { $p2 = $kv -split '='; $DT_CFG[$p2
 $btName = if ($Tag) { "daytrade-backtest-$Tag" } else { 'daytrade-backtest' }
 $data = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../data'))
 $nowU = (Get-Date).ToUniversalTime(); $nowT = [DateTimeOffset]::new($nowU).ToUnixTimeSeconds(); $enc = [Text.UTF8Encoding]::new($false)
-$se = [TimeZoneInfo]::FindSystemTimeZoneById('W. Europe Standard Time')
+$se = TzFind('W. Europe Standard Time')
 function CostOf($cls) { switch ($cls) { 'Aktier' { 0.002 } 'Krypto' { 0.003 } default { 2 * (0.001 + 0.004) / 9.5 } } }
 function Bucket($sc) { if ($sc -ge 80) { '80+' } elseif ($sc -ge 70) { '70–79' } elseif ($sc -ge 58) { '58–69' } elseif ($sc -ge 45) { '45–57' } else { 'under 45' } }
 function Summary($first, $ready) {
