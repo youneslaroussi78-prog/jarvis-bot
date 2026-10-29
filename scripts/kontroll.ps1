@@ -68,7 +68,7 @@ foreach ($tk in $TASKS) {
   if ($lvl -ne 'ok') { $runLevel = 'fel'; $runItems += "$($tk.name): $txt" }
   $runOut += [ordered]@{ id = $tk.id; name = $tk.name; last = $(if ($last) { $last.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') }); ok = $(if ($hb) { $hb.ok } else { $null }); expected = $(if ($fire) { $fire.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') }); level = $lvl; text = $txt }
 }
-Add 'runs' 'Schemalagda körningar' $runLevel $(if ($runLevel -eq 'ok') { 'Alla körningar har gått enligt schemat.' } else { 'En körning har missats. Öppna den i Claude-appen och godkänn eller stoppa den; ställ in uppgiften på Auto.' }) $runItems
+Add 'runs' 'Schemalagda körningar' $runLevel $(if ($runLevel -eq 'ok') { 'Alla körningar har gått enligt schemat.' } else { 'En körning har missats. Se körningen och dess logg på claude.ai/code/routines.' }) $runItems
 
 # ---------- marknadstider ----------
 $wd = [int]$now.DayOfWeek -in 1..5; $dayHours = $wd -and $now.Hour -ge 9 -and $now.Hour -lt 22

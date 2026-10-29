@@ -79,7 +79,7 @@ function Fx($ccy) { if ($ccy -eq 'SEK') { return 1.0 }; if ($BarsDir) { return 1
 # Handelsdagens slut för en tidpunkt, i börsens egen tidszon (USA och Kanada 16.00 New York, London och Lissabon 16.30,
 # Oslo 16.20, Köpenhamn 17.00, Helsingfors 18.30, Stockholm och övriga Europa 17.30), krypto 23.00 svensk tid
 $BOURSE = @{ 'USA' = @('Eastern Standard Time', '16:00'); 'Kanada' = @('Eastern Standard Time', '16:00'); 'Råvaror' = @('Eastern Standard Time', '16:00'); 'Storbritannien' = @('GMT Standard Time', '16:30'); 'Portugal' = @('GMT Standard Time', '16:30')
-  'Norge' = @('W. Europe Standard Time', '16:20'); 'Danmark' = @('W. Europe Standard Time', '17:00'); 'Finland' = @('FLE Standard Time', '18:30'); 'Sverige' = @('W. Europe Standard Time', '17:30')
+  'Norge' = @('W. Europe Standard Time', '16:20'); 'Danmark' = @('W. Europe Standard Time', '17:00'); 'Finland' = @('GTB Standard Time', '18:30'); 'Sverige' = @('W. Europe Standard Time', '17:30')
   'Tyskland' = @('W. Europe Standard Time', '17:30'); 'Frankrike' = @('W. Europe Standard Time', '17:30'); 'Nederländerna' = @('W. Europe Standard Time', '17:30'); 'Belgien' = @('W. Europe Standard Time', '17:30')
   'Schweiz' = @('W. Europe Standard Time', '17:30'); 'Italien' = @('W. Europe Standard Time', '17:30'); 'Spanien' = @('W. Europe Standard Time', '17:30'); 'Österrike' = @('W. Europe Standard Time', '17:30') }
 function DayEnd($market, [int64]$t) {

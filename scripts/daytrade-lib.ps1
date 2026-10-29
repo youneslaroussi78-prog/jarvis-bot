@@ -44,7 +44,7 @@ $DT_EXTRA = @(
   @{ id = 'x-volv'; y = 'VOLV-B.ST'; tv = 'OMXSTO:VOLV_B'; name = 'Volvo'; mk = 'Sverige'; sector = 'Aktie Sverige'; open = @('09:00', 'W. Europe Standard Time'); dec = 2; stock = $true }
   @{ id = 'x-evo'; y = 'EVO.ST'; tv = 'OMXSTO:EVO'; name = 'Evolution'; mk = 'Sverige'; sector = 'Aktie Sverige'; open = @('09:00', 'W. Europe Standard Time'); dec = 2; stock = $true }
   @{ id = 'x-saab'; y = 'SAAB-B.ST'; tv = 'OMXSTO:SAAB_B'; name = 'Saab'; mk = 'Sverige'; sector = 'Aktie Sverige'; open = @('09:00', 'W. Europe Standard Time'); dec = 2; stock = $true }
-  @{ id = 'x-nokia'; y = 'NOKIA.HE'; tv = 'OMXHEX:NOKIA'; name = 'Nokia'; mk = 'Finland'; sector = 'Aktie Europa'; open = @('10:00', 'FLE Standard Time'); dec = 3; stock = $true }
+  @{ id = 'x-nokia'; y = 'NOKIA.HE'; tv = 'OMXHEX:NOKIA'; name = 'Nokia'; mk = 'Finland'; sector = 'Aktie Europa'; open = @('10:00', 'GTB Standard Time'); dec = 3; stock = $true }   # GTB har samma tid som Helsingfors; FLE blir Europe/Kiev, som saknas i molnets Linux
   @{ id = 'x-eqnr'; y = 'EQNR.OL'; tv = 'OSL:EQNR'; name = 'Equinor'; mk = 'Norge'; sector = 'Aktie Europa'; open = @('09:00', 'W. Europe Standard Time'); dec = 2; stock = $true }
 )
 $DT_CLOSE = @{ 'USA' = @('Eastern Standard Time', '16:00'); 'Råvaror' = @('Eastern Standard Time', '16:00'); 'Tyskland' = @('W. Europe Standard Time', '17:30'); 'Sverige' = @('W. Europe Standard Time', '17:30'); 'Krypto' = @('W. Europe Standard Time', '23:00')

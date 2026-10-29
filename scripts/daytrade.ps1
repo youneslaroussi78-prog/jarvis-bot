@@ -27,7 +27,7 @@ $MKT = @(
   @{ tv = 'sweden'; name = 'Sverige'; pre = 'se'; ex = @('OMXSTO'); y = @{ OMXSTO = '.ST' }; open = @('09:00', 'W. Europe Standard Time'); cap = 1e9; liq = 1e6; top = 8 }
   @{ tv = 'norway'; name = 'Norge'; pre = 'no'; ex = @('OSL'); y = @{ OSL = '.OL' }; open = @('09:00', 'W. Europe Standard Time'); cap = 2e9; liq = 1e6; top = 4 }
   @{ tv = 'denmark'; name = 'Danmark'; pre = 'dk'; ex = @('OMXCOP'); y = @{ OMXCOP = '.CO' }; open = @('09:00', 'W. Europe Standard Time'); cap = 2e9; liq = 1e6; top = 3 }
-  @{ tv = 'finland'; name = 'Finland'; pre = 'fi'; ex = @('OMXHEX'); y = @{ OMXHEX = '.HE' }; open = @('10:00', 'FLE Standard Time'); cap = 3e8; liq = 1e6; top = 3 }
+  @{ tv = 'finland'; name = 'Finland'; pre = 'fi'; ex = @('OMXHEX'); y = @{ OMXHEX = '.HE' }; open = @('10:00', 'GTB Standard Time'); cap = 3e8; liq = 1e6; top = 3 }
   @{ tv = 'germany'; name = 'Tyskland'; pre = 'de'; ex = @('XETR'); y = @{ XETR = '.DE' }; open = @('09:00', 'W. Europe Standard Time'); cap = 2e9; liq = 3e6; top = 6 }
   @{ tv = 'france'; name = 'Frankrike'; pre = 'fr'; ex = @('EURONEXT'); y = @{ EURONEXT = '.PA' }; open = @('09:00', 'W. Europe Standard Time'); cap = 2e9; liq = 3e6; top = 5 }
   @{ tv = 'netherlands'; name = 'Nederländerna'; pre = 'nl'; ex = @('EURONEXT'); y = @{ EURONEXT = '.AS' }; open = @('09:00', 'W. Europe Standard Time'); cap = 2e9; liq = 3e6; top = 3 }
