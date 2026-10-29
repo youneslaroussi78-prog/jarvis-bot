@@ -13,7 +13,7 @@ ln -sfn /home/user/jarvis-data /home/user/jarvis-bot/data
 export TZ=Europe/Stockholm
 command -v pwsh >/dev/null || bash moln/setup.sh
 git -C data config user.name "Jarvis (moln)"; git -C data config user.email "321903001+youneslaroussi78-prog@users.noreply.github.com"
-git -C data pull --rebase -q
+git -C data fetch -q origin main && git -C data checkout -q -B main origin/main   # datan står annars på ett lösgjort läge
 ```
 
 Skript körs från `/home/user/jarvis-bot` med `pwsh -NoProfile -File scripts/<namn>.ps1 <parametrar>`. Misslyckas ett skript (TradingView eller Yahoo svarar inte): notera det och fortsätt. Svarar Yahoo och TradingView med 403 eller "proxy tunnel": miljöns nätverkslista saknar dem, se `moln/README.md`. Skriv det i sammanfattningen.
