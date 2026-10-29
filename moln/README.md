@@ -42,6 +42,19 @@ Molnkörningarnas tider anges i UTC. Svensk vintertid är UTC+1 (sommartid UTC+2
 
 Max-abonnemanget tillåter 15 molnkörningar per dag. Vardagar blir det 14, så en extra körning för hand ryms. Timvakten börjar 10 i stället för 09 av det skälet. Körningarna räknas också mot abonnemangets vanliga användning.
 
+## Läget (29 okt 2026)
+
+Molnet är påslaget sedan 29 okt 11.00. Miljön heter Jarvis (`env_01DWhEkhTkmiNXmEbzWb5AgY`) och har nätverkslistan, `TZ=Europe/Stockholm` och ett startskript som installerar PowerShell 7. Provkörningen i miljön gav 200 från Yahoo och TradingView, nivaer.ps1, update.ps1 och paper.ps1 fungerade, och testerna gav 36 av 36. Datorns fem uppgifter under Schemalagt är pausade.
+
+| Molnkörning | Id | Modell |
+|---|---|---|
+| Jarvis morgonscan | `trig_01K8m3iDtamLN21cHfuMfnf6` | Opus 5.5 |
+| Jarvis testtrade-vakt | `trig_015wTTyi5MVzSUutrVZVhVGo` | Sonnet 5.5 |
+| Jarvis kvällsscan | `trig_01WHw6sGi8oxqXiCBBej5dui` | Opus 5.5 |
+| Jarvis krypto helg | `trig_01V3cHXzALdUJKH4EJUbes5g` | Sonnet 5.5 |
+
+Körningarna har bara kopplingarna Twelve Data och Crypto.com. En ny molnkörning får automatiskt alla kopplingar i kontot (Gmail, Fortnox med flera), så begränsa dem direkt efter att den skapats. Claudes GitHub-app har bara åtkomst till jarvis-bot och jarvis-data. Se körningarna på claude.ai/code/routines.
+
 ## Byte från datorn till molnet
 
 1. Spara datan från datorn: `cd data && git add -A && git commit -m "Sista körningen på datorn" && git push`.
