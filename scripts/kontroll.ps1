@@ -40,7 +40,7 @@ if ($Run) {
 # ---------- schemat: när borde varje körning senast ha gått klart ----------
 $TASKS = @(
   @{ id = 'jarvis-morgonscan'; name = 'Morgonscan'; cron = '45 7 * * 1-5' }
-  @{ id = 'jarvis-testtrade-vakt'; name = 'Testtrade-vakten'; cron = '0 9-21 * * 1-5' }
+  @{ id = 'jarvis-testtrade-vakt'; name = 'Testtrade-vakten'; cron = '0 10-21 * * 1-5' }
   @{ id = 'jarvis-kvallsscan'; name = 'Kvällsscan'; cron = '20 22 * * 1-5' }
   @{ id = 'jarvis-krypto-helg-auto'; name = 'Krypto helg'; cron = '0 10,20 * * 0,6' }   # ersatte jarvis-krypto-helg 25 okt (den gamla är pausad)
 )
