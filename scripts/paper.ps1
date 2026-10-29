@@ -47,7 +47,7 @@ $RULES = [ordered]@{
     'Turbo och mini simuleras med knockout: under stoppet med marginal och under S2, högst 5 gångers hävstång för swing och 10 för daytrade. Gap förbi knockout ger förlust över 1R.',
     'Kostnader: 0,1 % per affär för aktier, 0,15 % för krypto, plus 0,4 % spread på produktens värde och cirka 7 % finansiering per år för turbo och mini. Resultat i kronor med dollarkursen vid köpet.',
     'Blankning (short) med samma regler spegelvänt: BOS nedåt, stopp ovanför, mål vid stöd under. Bara i nedtrend, aldrig in i översålt (RSI under 30), högst 3 blankningar samtidigt, halv risk i risk-on. Lånekostnad cirka 2 % per år för aktier och 10 % för krypto; Mini S och Turbo S har knockout ovanför stoppet.',
-    'Dagsmål (YL 28 okt 2026): +2 % av portföljvärdet per handelsdag, räknat på stängda trades sedan midnatt mot värdet vid dagens början. När målet är nått läggs inga nya testtrades den dagen; öppna positioner följer sin plan. Lägen tas både för köp och blankning i aktier, index, ädelmetaller och krypto, alltid enligt reglerna ovan.')
+    'Dagsmål (YL 28 okt 2026): +2 % av portföljvärdet per handelsdag, räknat på stängda trades sedan midnatt mot värdet vid dagens början. När målet är nått läggs inga nya testtrades den dagen; öppna positioner följer sin plan. Lägen tas både för köp och blankning i aktier, index, ädelmetaller och krypto, alltid enligt reglerna ovan. YL 29 okt: daytrades med betyg A eller B, swing B med -AllowB, inga nya daytrades från kl 21, blankning lika gärna som köp.')
 }
 function N($v) { if ($null -eq $v -or $v -is [string]) { return [double]::NaN }; [double]$v }
 function Ok([double]$v) { -not ([double]::IsNaN($v) -or [double]::IsInfinity($v)) }

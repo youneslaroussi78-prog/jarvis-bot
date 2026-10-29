@@ -30,7 +30,8 @@ $DT_INSTR = @(
 # (sämst i båda halvorna) och inga redo lägen efter 19. Det tog snittet från −0,36R till −0,10R netto per trade; inget läge har ännu en fördel.
 #   trial: nya setups som prövas, kommaseparerat (gapgo = nyhetsgap som håller, gapfade = nyhetsgap som inte håller, trend = trenddag,
 #   orb60 = utbrott ur första timmen). Live använder bara de som hållit i båda halvorna av backtestet.
-$DT_CFG = @{ costFloorR = 0.1; noOrb = 1; lateHour = 19; trial = ''; gapMin = 0.5 }   # gapMin: minsta gap i dags-ATR för nyhetsgap
+# YL 29 okt ("trada mer, shorta när det ska ner, 2 % per dag"): B-lägen räknas också som redo och gränsen är kl 21 i stället för 19.
+$DT_CFG = @{ costFloorR = 0.1; noOrb = 1; lateHour = 21; trial = ''; gapMin = 0.5 }   # gapMin: minsta gap i dags-ATR för nyhetsgap
 # Bredare lista bara för backtestet (-Universe bred, Devin 26 okt: pröva nyhetsgap): aktier som ofta gappar på nyheter, i USA och Europa.
 # Urvalet är gjort i dag, så bolag som försvunnit saknas (överlevnadsfel); det är en grov kontroll, inte ett bevis.
 $DT_EXTRA = @(
@@ -48,7 +49,7 @@ $DT_EXTRA = @(
   @{ id = 'x-eqnr'; y = 'EQNR.OL'; tv = 'OSL:EQNR'; name = 'Equinor'; mk = 'Norge'; sector = 'Aktie Europa'; open = @('09:00', 'W. Europe Standard Time'); dec = 2; stock = $true }
 )
 $DT_CLOSE = @{ 'USA' = @('Eastern Standard Time', '16:00'); 'Råvaror' = @('Eastern Standard Time', '16:00'); 'Tyskland' = @('W. Europe Standard Time', '17:30'); 'Sverige' = @('W. Europe Standard Time', '17:30'); 'Krypto' = @('W. Europe Standard Time', '23:00')
-  'Kanada' = @('Eastern Standard Time', '16:00'); 'Storbritannien' = @('GMT Standard Time', '16:30'); 'Norge' = @('W. Europe Standard Time', '16:20'); 'Danmark' = @('W. Europe Standard Time', '17:00'); 'Finland' = @('FLE Standard Time', '18:30')
+  'Kanada' = @('Eastern Standard Time', '16:00'); 'Storbritannien' = @('GMT Standard Time', '16:30'); 'Norge' = @('W. Europe Standard Time', '16:20'); 'Danmark' = @('W. Europe Standard Time', '17:00'); 'Finland' = @('GTB Standard Time', '18:30')
   'Frankrike' = @('W. Europe Standard Time', '17:30'); 'Nederländerna' = @('W. Europe Standard Time', '17:30'); 'Schweiz' = @('W. Europe Standard Time', '17:30'); 'Italien' = @('W. Europe Standard Time', '17:30'); 'Spanien' = @('W. Europe Standard Time', '17:30') }
 
 function Get15($y, $range = '5d') {
@@ -191,7 +192,7 @@ function Analyze($ins, $X, $D, [double]$atT, $ctx) {
     if ($ins.stock -and $ctx.earn) { $ed = ($ctx.earn - $atU).TotalDays; if ($ed -ge -0.5 -and $ed -le 1.5) { $score -= 40; $flags += 'Rapport i dag eller i morgon' } }
     $score = [math]::Max(0, [math]::Min(100, $score)); $grade = if ($score -ge 70) { 'A' } elseif ($score -ge 58) { 'B' } elseif ($score -ge 45) { 'C' } else { 'D' }
     $s.dist = $dist; $s.score = [int]$score; $s.grade = $grade; $s.flags = $flags
-    $s.ready = [bool]($grade -eq 'A' -and $dist -le 0.8 -and $dist -ge -0.2 -and -not ($flags | Where-Object { $_ -match 'Paus|Rapport|EIA|Under 1,5|Stopp|inte klar|Efter kl' }))
+    $s.ready = [bool]($grade -in @('A', 'B') -and $dist -le 0.8 -and $dist -ge -0.2 -and -not ($flags | Where-Object { $_ -match 'Paus|Rapport|EIA|Under 1,5|Stopp|inte klar|Efter kl' }))
   }
   @{ px = $px; vwap = $vwap; PDH = $PDH; PDL = $PDL; HOD = $HOD; LOD = $LOD; orH = $orH; orL = $orL; atr15 = $atr15; atrD = $atrD; trendD = $trendD; rv = $rv; roll = $roll; sOpen = $sOpen; sEnd = $sEnd; gap = $(if ($i0 -gt 0) { $oA[$i0] / $cA[$i0 - 1] - 1 } else { 0 }); setups = @($setups) }
 }
