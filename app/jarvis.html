@@ -789,7 +789,7 @@ button.sys-row:hover{background:var(--glass-2)}
     <div class="glass">
       <div class="brand">
         <svg class="mark" viewBox="0 0 34 34" aria-hidden="true"><defs><linearGradient id="bm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2FD39A"/><stop offset=".55" stop-color="#3E7BFA"/><stop offset="1" stop-color="#7C6BFF"/></linearGradient></defs><rect width="34" height="34" rx="11" fill="url(#bm)"/><path d="M8 22.5 13.5 16l4 3.6L26 10.5" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="26" cy="10.5" r="2.4" fill="#fff"/></svg>
-        <div><b>Jarvis</b><span>Trading · Younes</span></div>
+        <div><b>Jarvis</b><span>Trading · YL</span></div>
       </div>
       <nav class="nav" id="sideNav"></nav>
       <div class="sys" id="sysBox">
@@ -802,7 +802,7 @@ button.sys-row:hover{background:var(--glass-2)}
 
   <main class="main">
     <div class="top">
-      <div class="titles"><small id="hello">Hej Younes</small><h1 id="vTitle">Hem</h1><p class="vsub" id="vSub"></p></div>
+      <div class="titles"><small id="hello">Hej YL</small><h1 id="vTitle">Hem</h1><p class="vsub" id="vSub"></p></div>
       <button class="chip health" type="button" id="healthChip" hidden><i class="dot"></i><span id="healthT">Hälsa</span></button>
       <button class="chip fresh" type="button" id="fresh" aria-label="Uppdatera priser"><i class="dot live"></i><span class="lbl">Priser</span> <span id="freshT">hämtas…</span><svg class="sync" id="syncBtn" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 10A7.8 7.8 0 0 0 5.6 6.3L4 8"/><path d="M4 3.5V8h4.5"/><path d="M4.5 14a7.8 7.8 0 0 0 13.9 3.7L20 16"/><path d="M20 20.5V16h-4.5"/></svg></button>
       <button class="iconbtn" type="button" id="lookBtn" aria-label="Byt till ljust läge"></button>
@@ -1205,7 +1205,7 @@ function renderAll(){renderInbox();renderHealth();renderHeader();renderOverview(
 
 function renderHeader(){
   const d=new Date(),hr=d.getHours();
-  $("hello").textContent=(hr<10?"God morgon":hr<18?"God eftermiddag":"God kväll")+", Younes · "+d.toLocaleDateString("sv-SE",{weekday:"long",day:"numeric",month:"long"});
+  $("hello").textContent=(hr<10?"God morgon":hr<18?"God eftermiddag":"God kväll")+", YL · "+d.toLocaleDateString("sv-SE",{weekday:"long",day:"numeric",month:"long"});
   const at=S.meta.prices?.at,chip=$("fresh");
   if(!at){$("freshT").textContent=S.dbOk===false?"ej tillgängliga":"hämtas…"}
   else{const age=(Date.now()-new Date(at))/36e5;$("freshT").textContent=timeStr(at).replace(/^idag /,"");chip.classList.toggle("stale",age>8);chip.title=(age>8?"Priserna är äldre än 8 timmar.":"Källa: "+(S.meta.prices.source||"TradingView"))+" Tryck för att uppdatera."}
@@ -1592,7 +1592,7 @@ function renderDayFacit(){
       h("div",{class:"sstats"},...tr.map(x=>h("div",{class:"ss"},h("b",{text:x.name}),h("span",{class:"v "+(x.holds?"up":"down"),text:x.verdict}),h("small",{text:`Första halvan ${hv(x.h1)} · andra ${hv(x.h2)}`})))))}
   // aktier i rörelse (daytrade5.ps1 -InPlay, Devin 26 okt): cirka 300 USA-aktier, bara dagar med gap minst 3 % och dubbel volym de första 15 minuterna
   const ip=F.inplay;if(ip?.rows?.length){const c=x=>x?.n?`${R(x.netB)} billig · ${R(x.netA)} Avanza (${x.n} st)`:"inga";
-    box.append(h("h3",{text:`Aktier i rörelse: ${ip.from} – ${ip.to}`}),h("p",{text:`${ip.stocks} aktier, ${fmt(num(ip.candles))} candlar à 5 minuter, ${fmt(num(ip.inPlayDays))} dagar i rörelse av ${fmt(num(ip.stockDays))}, ${fmt(num(ip.signals))} lägen. ${ip.filter} Alla lägen: ${c(ip.overall)}. ${ip.rule} ${ip.rows.some(x=>x.holds)?"Godkända prövas framåt i testportföljen först när Devin sagt ja.":"Inget håller, så inget används live."}`}),
+    box.append(h("h3",{text:`Aktier i rörelse: ${ip.from} – ${ip.to}`}),h("p",{text:`${ip.stocks} aktier, ${fmt(num(ip.candles))} candlar à 5 minuter, ${fmt(num(ip.inPlayDays))} dagar i rörelse av ${fmt(num(ip.stockDays))}, ${fmt(num(ip.signals))} lägen. ${ip.filter} Alla lägen: ${c(ip.overall)}. ${ip.rule} ${ip.rows.some(x=>x.holds)?"Godkända prövas framåt i testportföljen först när YL sagt ja.":"Inget håller, så inget används live."}`}),
       h("div",{class:"sstats"},...ip.rows.map(x=>h("div",{class:"ss"},h("b",{text:x.name}),h("span",{class:"v "+(x.holds?"up":"down"),text:x.verdict}),h("small",{text:`Billig mäklare: ${(x.thirds||[]).map(y=>y.n?R(y.netB)+" ("+y.n+")":"–").join(" / ")} i periodens tre delar · Avanza ${R(x.all?.netA)}`})))),
       h("p",{text:ip.costs||""}))}
   // 5 minuter med flera tidsramar (daytrade5.ps1): riktning och nivåer på 15m, setups på 5m, två tempon och två kostnader
@@ -1916,27 +1916,27 @@ function context(){
   const m=S.meta.macro;if(m)L.push("\nMAKRO: "+(m.items||[]).map(x=>`${x.label} ${x.value}${x.note?" ("+x.note+")":""}`).join("; ")+". "+(m.text||""));
   const ev=(S.meta.calendar?.events||[]).filter(e=>dayDiff(e.end||e.date)>=0);if(ev.length)L.push("\nKOMMANDE: "+ev.map(e=>`${e.date} ${e.label}${e.note?" ("+e.note+")":""}`).join("; "));
   if(S.positions.length){L.push("\nPOSITIONER (senast kända):");for(const p of S.positions)L.push(p.kind==="fond"?`- Fond ${p.name}: ca ${kr(num(p.value))}. ${p.note||""}`:`- ${p.name}: ${p.qty} st à ${p.avg} kr (insats ${kr(num(p.qty)*num(p.avg))}), underliggande ${assetById(p.underlying)?.name||p.underlying}, hävstång ${p.lev||"?"}, stopp ${rng(p.stop,0)}. ${p.warn||""} ${p.note||""}`);if(S.meta.positionsInfo?.note)L.push("Obs: "+S.meta.positionsInfo.note)}
-  const s=settings();L.push(`\nRISK: tradingkapital ${fin(num(s.capital))?kr(num(s.capital)):"inte ifyllt"}, risk per trade ${fmt(num(s.riskPct??1),1)} % = ${fin(riskKr())?kr(riskKr()):"okänt"}.${lossToday()?" Devin har en förlust i dag: inga nya trades i dag.":""}`);
+  const s=settings();L.push(`\nRISK: tradingkapital ${fin(num(s.capital))?kr(num(s.capital)):"inte ifyllt"}, risk per trade ${fmt(num(s.riskPct??1),1)} % = ${fin(riskKr())?kr(riskKr()):"okänt"}.${lossToday()?" YL har en förlust i dag: inga nya trades i dag.":""}`);
   const T=[...S.trades].sort((a,b)=>(b.date||"").localeCompare(a.date||"")).slice(0,10);if(T.length){L.push("\nJOURNAL (senaste):");for(const t of T)L.push(`- ${t.date} ${t.asset} ${t.product||""} ${t.dir==="short"?"kort":"lång"}, resultat ${fin(num(t.resultKr))?kr(num(t.resultKr)):"öppen"}, planerad risk ${fin(num(t.riskKr))?kr(num(t.riskKr)):"?"}, regler följda: ${t.rulesOk===false?"nej":t.rulesOk===true?"ja":"?"}. ${t.note||""}`)}
   return L.join("\n");
 }
-const RULES=`Du är Jarvis, Devins tradingassistent i hans dashboard. Svara alltid på svenska, kort, lugnt och tydligt.
+const RULES=`Du är Jarvis, YL:s tradingassistent i YL:s dashboard. Kalla användaren YL. Svara alltid på svenska, kort, lugnt och tydligt.
 Så här jobbar du:
 - Ge raka och ärliga marknadsbesked: är det rimligt att köpa nu, ja, nej, delvis eller vänta, och var ligger en vettig köpzon. Ingen automatisk optimism. Är bilden svag, säg "avvakta" eller "köp inte".
-- Ge aldrig personliga köp- eller säljorder om hans pengar och gör inga affärer. Analysera och låt beslutet vara Devins.
+- Ge aldrig personliga köp- eller säljorder om YL:s pengar och gör inga affärer. Analysera och låt beslutet vara YL:s.
 - Ange när det passar: köpzon, villkor för BOS och entry, stopp och invalidering, mål 1 och 2, och risk/belöning.
-- Devins entrymetod har företräde: tydlig nivå → absorption (långa vekar, hög volym, inga nya bottnar) → BOS på 1h/4h (ingen entry utan BOS) → entry på rekylen → stopp under absorptionsbotten → max 1 % risk, antal = (1 % av kapitalet)/(entry − stopp) → mål nästa motstånd, minst 1:2.
-- Testportföljen både köper och blankar (short) enligt regelboken: blankning bara i nedtrend, BOS nedåt, stopp ovanför, aldrig in i översålt. För Devin på Avanza sker blankning via Mini S, Turbo S eller bear-certifikat: knockout ligger ovanför, och bear-certifikat nollställs dagligen.
-- Hävstång: räkna alltid på vad stoppet betyder i hans produkt (stoppavstånd i % × hävstång). Knockout ska ligga under S2, annars ingen turbo. Bull X8 nollställs dagligen och passar inte för swing.
+- YL:s entrymetod har företräde: tydlig nivå → absorption (långa vekar, hög volym, inga nya bottnar) → BOS på 1h/4h (ingen entry utan BOS) → entry på rekylen → stopp under absorptionsbotten → max 1 % risk, antal = (1 % av kapitalet)/(entry − stopp) → mål nästa motstånd, minst 1:2.
+- Testportföljen både köper och blankar (short) enligt regelboken: blankning bara i nedtrend, BOS nedåt, stopp ovanför, aldrig in i översålt. För YL på Avanza sker blankning via Mini S, Turbo S eller bear-certifikat: knockout ligger ovanför, och bear-certifikat nollställs dagligen.
+- Hävstång: räkna alltid på vad stoppet betyder i YL:s produkt (stoppavstånd i % × hävstång). Knockout ska ligga under S2, annars ingen turbo. Bull X8 nollställs dagligen och passar inte för swing.
 - Varna för hämndtrading efter förluster och påminn om 1 %-regeln. Efter en förlust: inga nya trades samma dag.
 - Ge minst två motargument i en analys. Tänk på korrelationen: ränta/olja, riskaptit och AI/tech kan falla samtidigt.
 - Följ Tradingbibelns arbetsordning: makro, HTF-struktur, nivåer med konfluens (minst två verktyg), likviditet, indikatorer, scenarier, risk, motargument, besked. Högre tidsram slår lägre, konfluens slår enskilda signaler, nivåer slår signaler. Skilj på stängd och öppen candle.
 - Svarsformat: besked först (köp nu, köp inte, delvis eller vänta, köpzon och invalidering), sedan makro kort, stöd och motstånd med vad som bildar varje zon, scenarier (trigger, entry, stopp, mål), för och emot.
 - Ge alltid en invalideringsnivå och säg rakt ut när den brutits. Rita inte om nivåer i efterhand. Räkna in kostnader och skatt.
-- Du kan inte hämta nya priser eller nyheter. Använd bara datan nedan och säg hur gammal den är när det spelar roll. Vill han ha färsk data: säg att han ska skriva "uppdatera Jarvis" till Claude.
+- Du kan inte hämta nya priser eller nyheter. Använd bara datan nedan och säg hur gammal den är när det spelar roll. Vill YL ha färsk data: säg att YL ska skriva "uppdatera Jarvis" till Claude.
 - Skriv utan markdown-rubriker och tabeller. Korta stycken, punkter med •. Avsluta en analys med en kort mening om att det inte är finansiell rådgivning.`;
 function addMsg(role,text,cls){const m=h("div",{class:"msg "+(role==="user"?"me":"ai")+(cls?" "+cls:""),text});$("msgs").append(m);$("msgs").scrollTop=$("msgs").scrollHeight;return m}
-function renderChat(){$("msgs").replaceChildren();if(!S.chat.length)addMsg("assistant","Hej Devin. Vad vill du kolla? Jag kan gå igenom nivåerna, räkna på en trade med din 1 %-regel eller granska journalen.");for(const t of S.chat)addMsg(t.role,t.content)}
+function renderChat(){$("msgs").replaceChildren();if(!S.chat.length)addMsg("assistant","Hej YL. Vad vill du kolla? Jag kan gå igenom nivåerna, räkna på en trade med din 1 %-regel eller granska journalen.");for(const t of S.chat)addMsg(t.role,t.content)}
 async function send(q){
   q=(q??$("ask").value).trim();if(!q||S.ctl)return;if(S.view!=="jarvis")setView("jarvis");
   if(!S.sample){addMsg("assistant","Chatten fungerar när Jarvis är öppen i Claude och du har tillåtit att sidan frågar Claude.","err");return}
