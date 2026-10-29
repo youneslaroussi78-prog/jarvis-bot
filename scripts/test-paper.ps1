@@ -114,6 +114,9 @@ OpenTest 'open-norge-nok' @{ market = 'Norge'; currency = 'NOK' } @{} 'Neutral' 
 # T0 + 2 h = lördag 24 okt 02.00 UTC; Xetra stänger 17.30 i Frankfurt = 15.30 UTC (sommartid)
 OpenTest 'open-daytrade-tyskland' @{ market = 'Tyskland'; currency = 'EUR' } @{ horizon = 'day' } 'Neutral' @() { param($o, $L) if ([int64]$L.trades[0].dayEnd -ne ($T0 + 15.5 * 3600)) { "dagens slut $($L.trades[0].dayEnd) ska vara $($T0 + 15.5 * 3600) (17.30 i Frankfurt)" } }
 OpenTest 'open-daytrade-london' @{ market = 'Storbritannien'; currency = 'GBX' } @{ horizon = 'day' } 'Neutral' @() { param($o, $L) if ([int64]$L.trades[0].dayEnd -ne ($T0 + 15.5 * 3600)) { "dagens slut $($L.trades[0].dayEnd) ska vara 16.30 i London" } }
+# YL 29 okt: hela kapitalet fördelas med allocPct i planen (andel av portföljvärdet), alla aktiva trades tillsammans högst hela värdet
+OpenTest 'open-alloc-hela' @{} @{ allocPct = 100 } 'Neutral' @() { param($o, $L) $t = $L.trades[0]; if ($o -notmatch 'JA') { 'en trade med hela kapitalet ska godkännas' } elseif ([double]$t.qty -ne 100 -or [double]$t.product.capitalKr -ne 100000 -or [double]$t.riskKr -ne 4000 -or [double]$t.riskPct -ne 4) { "antal $($t.qty), insats $($t.product.capitalKr), risk $($t.riskKr) kr ($($t.riskPct) %) ska vara 100 st, 100 000 kr, 4 000 kr (4 %)" } }
+OpenTest 'open-alloc-over-kapital' @{} @{ allocPct = 50 } 'Neutral' @() { param($o, $L) if ($o -notmatch 'NEJ.*kvar av kapitalet' -or @($L.trades | Where-Object { $_.symbol -eq 'TST' }).Count) { 'mer än hela kapitalet i aktiva trades ska nekas' } } @(Trade @{ id = 'pt-k1'; symbol = 'K1'; ysym = 'K1'; sector = 'Kap'; status = 'öppen'; createdT = $T0 - 86400; riskKr = 1000; fill = @{ t = $T0 - 86400; price = 99 }; product = @{ type = 'underliggande'; lev = 1; capitalKr = 60000 } })
 
 # daytrades på 15-minutersdata stängs vid dagens slut och inte en timme för tidigt
 $T15 = $T0

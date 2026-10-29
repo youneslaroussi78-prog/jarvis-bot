@@ -40,7 +40,7 @@ $RULES = [ordered]@{
     'Ingen trade utan nedskriven handelsplan: tes, HTF och regim, nivå med minst två verktyg, BOS-villkor, invalidering, två motargument, händelser, korrelation, exitplan och alla nio grindar (references\handelsplan.md).',
     'Swing: bara A-betyg, minst 1:2, ingen rapport inom 14 dagar, stopp högst 8 % bort. Köp vid BOS; ordern förfaller efter 7 dagar eller om kursen går under stoppet först.',
     'Daytrade: läge från daytrade-scannern (ORB, sweep av gårdagens high/low, VWAP-trend på 15 minuter) eller egen setup, minst 1:2 och stopp högst 4 % bort. Ordern gäller samma dag och allt säljs vid börsens stängning (till exempel USA 22.00, Stockholm 17.30, London 17.30, krypto 23.00 svensk tid). Följs upp på 15-minutersdata.',
-    'Risk 1 % per trade (0,5 % i försiktig marknad, inga nya i risk-off), högst 5 % total risk. Swing: högst 5 aktiva, 2 per sektor och 3 nya per dag. Daytrade, utöver swing: inget tak för antalet, bara bra lägen, högst 2 samtidigt per sektor och 1 % risk även i försiktig marknad.',
+    'Kapitalet (YL 29 okt): Jarvis fördelar hela portföljvärdet efter dagens lägen, med andelen per trade i planen (allocPct, upp till 100 %, en trade med allt eller flera mindre), alla aktiva trades tillsammans högst hela värdet. Risken per trade blir insatsen × stoppavståndet × hävstången, och total risk högst 10 % under lärfasen. Utan allocPct: risk 1 % per trade (0,5 % i försiktig marknad, inga nya i risk-off), högst 5 % total risk. Swing: högst 5 aktiva, 2 per sektor och 3 nya per dag. Daytrade, utöver swing: inget tak för antalet, bara bra lägen, högst 2 samtidigt per sektor och 1 % risk även i försiktig marknad.',
     'Vid mål 1 säljs en tredjedel och stoppet flyttas till break-even. Resten vid mål 2, på stoppet, efter 21 dagar (swing) eller vid dagens slut (daytrade).',
     'Lärfas: tills 30 trades är avslutade finns ingen paus efter förluster och inget tak för antalet trades, så länge varje trade är bra och klarar planen, grindarna och risken (1 % per trade, högst 2 per sektor). Total risk högst 10 % under lärfasen i stället för 5 %. Sedan gäller pausreglerna, taken och 5 % igen.',
     'Ingen paus före Feds räntebesked eller amerikansk KPI (fortsätt handla och lär dig). Trades som läggs inom 24 timmar före ett besked märks och räknas för sig i statistiken. Efter en förlust inga nya trades samma dag, paus ett dygn efter två förluster i rad och stopp vid −6R på en vecka.',
@@ -321,19 +321,27 @@ if ($Open) {
     if ($c.sector -and @($sameHz | Where-Object { $_.sector -eq $c.sector }).Count -ge $RULES.maxPerSector) { $why += "redan $($RULES.maxPerSector) i sektorn $($c.sector)" }
     if (-not $learning -and @($L.trades | Where-Object { [double]$_.createdT -ge $today0 -and $(if ($_.horizon -eq 'day') { 'day' } else { 'swing' }) -eq $hz }).Count -ge $maxNew -and $maxNew -gt 0) { $why += "redan $maxNew nya $(if ($hz -eq 'day') { 'daytrades' } else { 'swingtrades' }) i dag" }
     $eq = Equity $L; $openRisk = (($active | Measure-Object riskKr -Sum).Sum)
-    $riskKr = [math]::Round($eq * $riskPct / 100, 0)
+    # fördelning (YL 29 okt: "du ska jobba med hela 100 000 kr ... analysera marknaden och se hur du kan fördela pengarna dag för dag"):
+    # allocPct i planen = andel av portföljvärdet som läggs i traden (upp till 100 %), alla aktiva trades tillsammans högst hela värdet.
+    # Risken blir insatsen × stoppavståndet × hävstången; utan allocPct gäller den gamla storleken (1 % risk, högst 25 % av värdet).
+    $alloc = N $pl.allocPct
+    if ((Ok $alloc) -and ($alloc -le 0 -or $alloc -gt 100)) { $why += "allocPct $(F $alloc 0) % (ska vara över 0 och högst 100)" }
+    $usedKr = [double](($active | ForEach-Object { N $_.product.capitalKr } | Where-Object { Ok $_ } | Measure-Object -Sum).Sum)
+    if ((Ok $alloc) -and $usedKr + $eq * $alloc / 100 -gt $eq * 1.0001) { $why += "bara $(F ([math]::Max(0, $eq - $usedKr)) 0) kr kvar av kapitalet ($(F ($usedKr / $eq * 100) 0) % ligger redan i aktiva trades)" }
+    $riskKr = if (Ok $alloc) { [math]::Round($eq * $alloc / 100 * $stopPct / 100 * [double]$prod.lev, 0) } else { [math]::Round($eq * $riskPct / 100, 0) }
     $maxRisk = if ($learning) { $RULES.maxOpenRiskPctLearn } else { $RULES.maxOpenRiskPct }
     if (($openRisk + $riskKr) / $eq * 100 -gt $maxRisk) { $why += "total risk över $maxRisk %" }
     if ($why.Count) { "NEJ $id ($($c.symbol)): $($why -join ', ')"; continue }
     $ccy = if ($c.currency) { [string]$c.currency } elseif ($c.market -eq 'Sverige') { 'SEK' } else { 'USD' }; $fx = Fx $ccy
     $perUnit = [math]::Abs($entry - $stop) * $fx
-    $qty = $riskKr / $perUnit
     $capPerUnit = if ($null -ne $fin) { [math]::Abs($entry - $fin) * $fx } else { $entry * $fx }
-    $maxQty = $eq * $RULES.maxPositionPct / 100 / $capPerUnit; if ($qty -gt $maxQty) { $qty = $maxQty }
+    if (Ok $alloc) { $qty = $eq * $alloc / 100 / $capPerUnit }
+    else { $qty = $riskKr / $perUnit; $maxQty = $eq * $RULES.maxPositionPct / 100 / $capPerUnit; if ($qty -gt $maxQty) { $qty = $maxQty } }
     # hela aktier, utom krypto och daytrades i index och råvaror via certifikat (en turbo på DAX motsvarar t.ex. 0,01 index per certifikat)
     if ($c.market -eq 'Krypto' -or $pl.fractional -eq $true) { $qty = [math]::Round($qty, 6) } else { $qty = [math]::Floor($qty) }
     if ($qty -le 0) { "NEJ $($id): för dyr per aktie för risken"; continue }
     $prod.capitalKr = [math]::Round($qty * $capPerUnit, 0)
+    if (Ok $alloc) { $riskPct = [math]::Round($qty * $perUnit / $eq * 100, 2) }
     $tplan = [ordered]@{}; foreach ($k in 'thesis', 'htf', 'level', 'trigger', 'invalidation', 'events', 'correlation', 'exit') { $tplan[$k] = Txt $pl.$k }
     $tplan.confluence = @($pl.confluence | Where-Object { Txt $_ }); $tplan.against = @($pl.against | Where-Object { Txt $_ }); $tplan.gates = $pl.gates
     $t = [pscustomobject][ordered]@{
@@ -341,7 +349,7 @@ if ($Open) {
       strategy = $c.strategy; strategyName = $c.strategyName; grade = $c.grade; score = $c.score; regime = $regime; why = $c.why; take = $(if ($takes -and $c.id) { $takes.($c.id) } else { $null })
       horizon = $hz; productType = $ptype; product = [pscustomobject]$prod; dayEnd = $(if ($hz -eq 'day') { DayEnd $c.market $nowT } else { $null }); tplan = [pscustomobject]$tplan; nearEvent = $nearEv
       plan = [pscustomobject]@{ entry = $entry; stop = $stop; t1 = $t1; t2 = $t2; rr1 = [math]::Round($rr1, 2); rr2 = [math]::Round($rr2, 2); t1Kind = $c.t1Kind }
-      currency = $ccy; fx = [math]::Round($fx, 4); qty = $qty; riskPct = $riskPct; riskKr = [math]::Round($qty * $perUnit, 0); dec = $c.dec
+      currency = $ccy; fx = [math]::Round($fx, 4); qty = $qty; allocPct = $(if (Ok $alloc) { $alloc } else { $null }); riskPct = $riskPct; riskKr = [math]::Round($qty * $perUnit, 0); dec = $c.dec
       status = 'väntar'; fill = $null; exits = @(); stopNow = $stop; t1done = $false; lastPrice = [double]$c.price; lastT = $nowT; mfeR = $null; maeR = $null; resultKr = $null; r = $null; closed = $null; reasonClosed = $null; daysHeld = $null; lesson = $null; scanT = $null
     }
     $L.trades = @($L.trades) + @($t)

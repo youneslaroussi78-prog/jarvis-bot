@@ -104,12 +104,14 @@ foreach ($o in $OUT | Select-Object -First 12) { "{0} {1,3} {2}{3,-20} {4,-38} {
 if ($Plans) {
   $rd = @($OUT | Where-Object { $_.ready }); if (-not $rd.Count) { 'Inga redo lägen, inga planutkast.'; return }
   $pl = foreach ($o in $rd) { $sh = $o.side -eq 'short'
-    # index, råvaror och krypto med tajt stopp: turbo med högst 9,5x hävstång (knockout långt bortom stoppet), annars blir positionen
-    # större än 25 % av portföljen innan risken når 0,5–1 %. Aktier handlas som aktier.
+    # index, råvaror och krypto med tajt stopp: turbo med högst 9,5x hävstång (knockout långt bortom stoppet). Aktier handlas som aktier.
     $isStock = [bool]$o.stock
-    $prodD = if (-not $isStock -and $o.market -ne 'Krypto') { $lev = 9.5; $ko = [math]::Round($o.entry * $(if ($sh) { 1 + 1 / $lev } else { 1 - 1 / $lev }), $o.dec); @{ type = 'turbo'; ko = $ko } } else { @{ type = 'underliggande' } }
+    # YL 29 okt: certifikat med hävstång även för krypto (turbo lång eller kort)
+    $prodD = if (-not $isStock) { $lev = 9.5; $ko = [math]::Round($o.entry * $(if ($sh) { 1 + 1 / $lev } else { 1 - 1 / $lev }), $o.dec); @{ type = 'turbo'; ko = $ko } } else { $lev = 1; @{ type = 'underliggande' } }
+    # förslag på andel av kapitalet (allocPct): stoppet kostar cirka 2 % av portföljen för A och 1,5 % för B, högst hela kapitalet; Jarvis justerar efter läget
+    $stopP = [math]::Abs($o.entry - $o.stop) / $o.entry * 100; $allocD = [math]::Max(1, [math]::Min(100, [math]::Round($(if ($o.grade -eq 'A') { 2 } else { 1.5 }) / ($stopP * $lev) * 100, 0)))
     [ordered]@{ id = $o.id; horizon = 'day'; side = $o.side; product = $prodD; fractional = (-not $isStock); symbol = $o.symbol; name = $o.name; ysym = $o.ysym; tv = $o.tv; market = $o.market; sector = $o.sector; currency = $o.currency; dec = $o.dec
-      entry = $o.entry; stop = $o.stop; t1 = $o.t1; t2 = $o.t2
+      entry = $o.entry; stop = $o.stop; t1 = $o.t1; t2 = $o.t2; allocPct = $allocD
       thesis = "$($o.setupName). $($o.why). UTKAST: granska nyheterna innan ordern läggs."
       htf = "Dagstrend $(@{ 1 = 'upp'; 0 = 'sidled'; -1 = 'ned' }[[int]$o.trendD]) (pris mot 20-dagars), VWAP $(Fm $o.vwap $o.dec), relativ volym $($o.relVol)."
       level = "Gårdagens high/low $(Fm $o.pdh $o.dec)/$(Fm $o.pdl $o.dec), dagens high/low $(Fm $o.hod $o.dec)/$(Fm $o.lod $o.dec)$(if ($o.orh) { ", öppningsrange $(Fm $o.orl $o.dec)–$(Fm $o.orh $o.dec)" })"
